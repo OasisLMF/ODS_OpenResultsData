@@ -23,15 +23,29 @@ https://oasislmf.org/open-data-standards
 
 ## Open Results Data (ORD)
 
-ORD was initially developed during the Lloyd's Lab innovation project (Cohort 3) in 2019, by a working group led by Oasis, that focussed on constructing model agnostic results formats and appropriate data formats. These model outputs cover an extensive suite of results that can be isolated by aspects of the exposure data, financial and statistical perspectives. The ORD Standard encompasses:
+ORD was initially developed during the Lloyd's Lab innovation project (Cohort 3) in 2019, by a working group led by Oasis, that focussed on constructing model agnostic results formats and appropriate data formats. These model outputs cover an extensive suite of results that can be isolated by aspects of the exposure data, financial and statistical perspectives. 
 
-More details and documents can be found here (https://github.com/OasisLMF/OpenDataStandards/tree/master/OpenResultsData)
 
 &nbsp; 
 
-## Versioning
+## Releases and Versioning 
 
-This is a separate repository specifically for the Open Results Data (ORD) standard which will be developed and versioned independently of the Open Exposure Data (OED) standard that can be found here (https://github.com/OasisLMF/ODS_OpenExposureData). All details on the governance and signoff process and the role of the ODS Steering Committee can also be found on the OED repo.
+This is a separate repository specifically for the Open Results Data (ORD) standard which will be developed and versioned independently of the Open Exposure Data (OED) standard (https://github.com/OasisLMF/ODS_OpenExposureData). The releases and versioning of ORD will follow the same format as OED using the SemVer convention (https://semver.org/), so given a version number MAJOR.MINOR.PATCH increments:
+
+   * **MAJOR** version when you make incompatible changes e.g. changing column names, changing the structure of the data.
+    
+   * **MINOR** version when you add functionality in a backwards compatible manner e.g. adding a new column with a default value, adding a new allowed value for an existing field.
+    
+   * **PATCH** version when you make backwards compatible bug fixes e.g. correcting a typo in a column label.
+   
+All new work will be done in **feature** branches, following the [GitFlow model](https://nvie.com/posts/a-successful-git-branching-model/). The latest released version will be held in the **master** branch and the current development work will be in develop or specific feature branches.
+
+&nbsp; 
+
+## Governance and Signoff
+
+All details of the ODS governance and signoff process and the role of the ODS Steering Committee can be found on the OED repo (https://github.com/OasisLMF/ODS_OpenExposureData).
+
 
 &nbsp; 
 
