@@ -61,9 +61,12 @@
            support performant filtering at the volumes these tables are expected
            to hold.
            Note: ReturnPeriod (EP, EP_Samples, GEP) and Quantile (ELT_Quantile, PLT_Quantile) are
-           FLOAT PK columns — values should always be exact stored constants
-           (e.g. 100.0, 250.0, 0.1) rather than computed floating-point results
-           to avoid equality comparison issues.
+           NUMERIC PK columns (NUMERIC(9,2) and NUMERIC(5,2) respectively). FLOAT is avoided in
+           primary keys because floating-point representation is inexact: two values that are
+           mathematically equal may differ in their binary encoding depending on how they were
+           computed, causing equality joins and uniqueness checks to behave incorrectly.
+           NUMERIC stores values as exact decimal fractions, so 100.0, 250.0, 0.1 etc. round-trip
+           without precision loss and compare reliably.
            Removed DEFAULT 0 / DEFAULT 0.0 from all nullable data columns in
            results tables (sections 7–8). NULL is now the implicit default,
            avoiding ambiguity with 0 as a legitimate result value. NOT NULL key
@@ -560,7 +563,7 @@ BEGIN
         SummaryId       INT   NOT NULL DEFAULT 0,
         EPCalc          INT   NOT NULL DEFAULT 0,
         EPType          INT   NOT NULL DEFAULT 0,
-        ReturnPeriod    FLOAT NOT NULL DEFAULT 0.0,
+        ReturnPeriod    NUMERIC(9,2) NOT NULL DEFAULT 0.0,
         Loss            FLOAT NULL,
         CONSTRAINT PK_EP PRIMARY KEY CLUSTERED (output_set_id, SummaryId, EPCalc, EPType, ReturnPeriod),
         CONSTRAINT FK_EP_OutputSet_output_set_id
@@ -616,7 +619,7 @@ BEGIN
         output_set_id   INT   NOT NULL,
         EventId         INT   NOT NULL DEFAULT 0,
         SummaryId       INT   NOT NULL DEFAULT 0,
-        Quantile        FLOAT NOT NULL DEFAULT 0.0,
+        Quantile        NUMERIC(5,2) NOT NULL DEFAULT 0.0,
         Loss            FLOAT NULL,
         CONSTRAINT PK_ELT_Quantile PRIMARY KEY CLUSTERED (output_set_id, EventId, SummaryId, Quantile),
         CONSTRAINT FK_ELT_Quantile_OutputSet_output_set_id
@@ -656,7 +659,7 @@ BEGIN
         SummaryId       INT   NOT NULL DEFAULT 0,
         SampleId        INT   NOT NULL DEFAULT 0,
         EPType          INT   NOT NULL DEFAULT 0,
-        ReturnPeriod    FLOAT NOT NULL DEFAULT 0.0,
+        ReturnPeriod    NUMERIC(9,2) NOT NULL DEFAULT 0.0,
         Loss            FLOAT NULL,
         CONSTRAINT PK_EP_Samples PRIMARY KEY CLUSTERED (output_set_id, SummaryId, SampleId, EPType, ReturnPeriod),
         CONSTRAINT FK_EP_Samples_OutputSet_output_set_id
@@ -682,7 +685,7 @@ BEGIN
         Day             INT   NULL,
         Hour            INT   NULL,
         Minute          INT   NULL,
-        Quantile        FLOAT NOT NULL DEFAULT 0.0,
+        Quantile        NUMERIC(5,2) NOT NULL DEFAULT 0.0,
         Loss            FLOAT NULL,
         CONSTRAINT PK_PLT_Quantile PRIMARY KEY CLUSTERED (output_set_id, SummaryId, Period, EventId, Quantile),
         CONSTRAINT FK_PLT_Quantile_OutputSet_output_set_id
@@ -759,7 +762,7 @@ BEGIN
         SummaryId      INT   NOT NULL DEFAULT 0,
         EPCalc         INT   NOT NULL DEFAULT 0,
         EPType         INT   NOT NULL DEFAULT 0,
-        ReturnPeriod   FLOAT NOT NULL DEFAULT 0.0,
+        ReturnPeriod   NUMERIC(9,2) NOT NULL DEFAULT 0.0,
         Loss           FLOAT NULL,
         CONSTRAINT PK_GEP PRIMARY KEY CLUSTERED (group_set_id, SummaryId, EPCalc, EPType, ReturnPeriod),
         CONSTRAINT FK_GEP_GroupSet_group_set_id
