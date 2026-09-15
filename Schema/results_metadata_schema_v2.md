@@ -14,14 +14,19 @@ how the underlying analyses were combined.
 The schema has a **platform-neutral core** (works for any modelling platform)
 plus two optional extension blocks:
 
-- **`oasis_platform`** — settings specific to the Oasis LMF platform (other
-  vendors don't populate this)
-- **`vendor_extensions`** — an open slot for any other vendor's own
-  platform-specific fields
+- **`platform_settings`** — generic, structured fields for cross-platform
+  concepts (PLA, disaggregation, correlation modelling) that not every
+  platform models, or models the same way; each platform populates the
+  fields it supports
+- **`vendor_settings`** — a free-form list of vendor/key/value triples for
+  anything not otherwise captured
 
 > Schema v2 incorporates ORD working-group feedback through September 2026:
-> GroupMethod codes, nullable `event_set` fields, and platform-neutral
-> `perspective_code` handling.
+> GroupMethod codes, nullable `event_set` fields, platform-neutral
+> `perspective_code` handling, and renaming/rescoping `oasis_platform` /
+> `vendor_extensions` to `platform_settings` / `vendor_settings` so the
+> schema stays decoupled from any single implementer — see the design
+> principle callout under [Platform settings](#platform-settings) below.
 
 ## Required fields
 
@@ -61,8 +66,8 @@ Everything else is optional, filled in where applicable/known.
 | `output_sets` | array of [Output set](#output-set-one-per-loss-perspective) | **yes** | One entry per loss perspective produced (e.g. GUL, IL, RI). |
 | `exposure_summary` | object | | See [Exposure summary](#exposure-summary). |
 | `grouping` | object | | See [Grouping settings](#grouping-settings-grouped-analyses-only). |
-| `oasis_platform` | object | | See [Oasis platform settings](#oasis-platform-settings-oasis-only). |
-| `vendor_extensions` | object | | See [Vendor extensions](#vendor-extensions). |
+| `platform_settings` | object | | See [Platform settings](#platform-settings). |
+| `vendor_settings` | array | | See [Vendor settings](#vendor-settings). |
 
 ---
 
@@ -202,11 +207,19 @@ why the analytical mean is excluded.
 
 ---
 
-## Oasis platform settings (Oasis only)
+## Platform settings
 
-`oasis_platform` consolidates the fields that only make sense on the Oasis
-LMF platform — other vendors shouldn't populate this block. (This mirrors how
-OED itself handles non-standard, platform-specific fields.)
+> **Design principle:** ORD and the ORDB relational model are platform-neutral
+> by design — they aren't defined in terms of what any one implementer happens
+> to support. `platform_settings` was originally called `oasis_platform` and
+> scoped to "Oasis-only" fields; it's renamed and described generically here
+> so any platform can use it, not just Oasis LMF.
+
+`platform_settings` holds generic, structured fields for cross-platform
+concepts — PLA, disaggregation, correlation modelling — that don't belong in
+the neutral core because not every platform models them, or models them the
+same way. Any platform populates the fields it supports and leaves the rest
+absent; a field being present here doesn't imply it's Oasis-specific.
 
 | Field | Type | Description |
 |---|---|---|
@@ -215,7 +228,7 @@ OED itself handles non-standard, platform-specific fields.)
 | `pla_settings` | object | PLA parameters, populated when `pla` is true — see below. |
 | `do_disaggregation` | boolean (default `true`) | Whether OED disaggregation was applied to split terms/conditions for aggregate exposure. |
 | `join_summary_info` | boolean (default `false`) | Whether summary info data was joined onto the output files. |
-| `correlation_settings` | array of objects | Hazard/damage correlation settings actually used (see below). Oasis-specific — other vendors typically apply correlation inside the model, before output, and may not expose these parameters at all. |
+| `correlation_settings` | array of objects | Hazard/damage correlation settings actually used (see below) — populate where a platform's correlation model exposes these parameters (e.g. Oasis LMF's internal correlation model); other platforms may apply correlation inside the model, before output, and have nothing to report here. |
 
 ### `pla_settings`
 
@@ -234,13 +247,32 @@ OED itself handles non-standard, platform-specific fields.)
 
 ---
 
-## Vendor extensions
+## Vendor settings
 
-`vendor_extensions` is an open slot for anything platform-specific that isn't
-covered by the neutral core or by `oasis_platform`. Each key should identify
-the vendor (e.g. `"verisk"`, `"moodys"`); the value's internal shape is
-entirely up to that vendor. Fields that turn out to be broadly useful are
-candidates for promotion into the core schema in a future version.
+`vendor_settings` is a free-form array of **vendor / key / value** triples for
+anything platform-specific that isn't covered by the neutral core or by
+`platform_settings`. It mirrors the `VendorExtension` table in the relational
+model (`analysis_id`, `vendor`, `key`, `value`). Renamed and restructured from
+`vendor_extensions` (previously a nested object keyed by vendor name) for the
+same reason as `platform_settings` above.
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `vendor` | string | **yes** | Identifies the vendor or platform, e.g. `"verisk"`, `"moodys"`. |
+| `key` | string | **yes** | The setting's name, in whatever convention the vendor uses. |
+| `value` | string | | The setting's value. Free-form — encode structured values as JSON text if needed. |
+
+Add one entry per field a vendor wants to report:
+
+```json
+"vendor_settings": [
+    { "vendor": "verisk", "key": "touchstone_version", "value": "5.2.0" },
+    { "vendor": "verisk", "key": "event_catalog_id", "value": "NA_HU_2024" }
+]
+```
+
+Fields that turn out to be broadly useful are candidates for promotion into
+the core schema, or into `platform_settings`, in a future version.
 
 ---
 

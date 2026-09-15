@@ -12,23 +12,34 @@
   for grouped analyses.
 
   ORD v2 is a breaking change to column names and coded values versus ORD v1
-  (see CHANGE LOG below). Oasis LMF v2.6.0 supports v1 and v2 in parallel until
-  January 2028 — this script is additive (Create_ORDB_v1_3.sql / v1_4.sql are
-  untouched) so a v1 database can still be stood up from this repo alongside v2.
+  (see CHANGE LOG below). This script defines the ORD v2 relational model on
+  its own terms — the ORD definitions and ORDB are platform-neutral by design
+  and are not defined in terms of any one implementer's transition plans, so
+  this file has no v1 relational model it needs to coexist with.
+  Create_ORDB_v1_3.sql / v1_4.sql remain in this repository because Oasis LMF
+  has chosen, as its own product decision, to support both v1 and v2 output
+  file formats in parallel until January 2028 — that is an Oasis-specific
+  implementation choice, not an ORD requirement, and other ORD v2 implementers
+  are not expected to maintain a v1 equivalent.
 
   OPEN QUESTIONS (raised in the ORD working group, not yet resolved — flagged
-  here rather than implemented; do not treat any of the below as decided):
+  here rather than implemented; do not treat either of the below as decided):
     1. group_number_of_periods placement (Joh Carter): should this live in a
        dedicated "grouping params" table rather than a metadata/settings table?
        If so, what is its PK/FK structure? Not added to this schema pending
        resolution.
-    2. Backward-compatibility mechanism for v1/v2 coexistence until Jan 2028:
-       version flag on the analysis record vs. separate table sets vs. a
-       conversion view? Not implemented here.
-    3. Should SummaryInfo / GroupSummaryInfo gain explicit boolean output-type
+    2. Should SummaryInfo / GroupSummaryInfo gain explicit boolean output-type
        flag columns (qelt, qplt, and the rest of ord_output from the v2 results
        metadata schema), mirroring the JSON schema, or should that stay
        file/JSON-only? Not added to this schema pending resolution.
+
+  RESOLVED: a v1/v2 backward-compatibility mechanism (version flag, separate
+  table sets, or a conversion view) was raised as an open question in an
+  earlier round of review. It's resolved as not applicable at the ORD level:
+  the ORD relational model only needs to define v2, since it's a new addition
+  to the specification rather than a revision of a previously-published
+  relational model. Any parallel v1/v2 support is a platform-level product
+  decision (see above), out of scope for the ORD definitions themselves.
 
   NAMING CONVENTIONS
   ------------------
@@ -355,9 +366,10 @@ END
 GO
 
 -- VendorExtension — v2.0: open-ended platform-specific metadata that isn't
--- covered by the platform-neutral core or the Oasis-specific Settings columns.
--- Deliberately not normalised further — vendor_extensions in the results
--- metadata schema is free-form per vendor.
+-- covered by the platform-neutral core or the platform_settings columns
+-- below. Deliberately not normalised further — vendor_settings in the
+-- results metadata schema is free-form per vendor, and this table mirrors
+-- it as (vendor, key, value) triples.
 IF OBJECT_ID('dbo.VendorExtension', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.VendorExtension (

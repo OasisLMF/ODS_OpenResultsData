@@ -1,16 +1,28 @@
 # ORD Output Definitions
 
+> **Design principle:** ORD and the ORDB relational model are platform-neutral
+> by design. They are defined on their own terms, not in terms of what any one
+> implementer (e.g. Oasis LMF) happens to support — Oasis LMF is one
+> implementer among several, expected to follow the ORD definitions rather
+> than the other way around. Where Oasis LMF makes its own product decisions
+> (such as supporting both ORD v1 and v2 output file formats in parallel until
+> January 2028), that is out of scope for the ORD definitions themselves.
+
 > **ORD v2 open questions** (raised in the ORD working group, not yet resolved —
 > flagged here rather than implemented in the relational model):
 > 1. `group_number_of_periods` placement (Joh Carter): should this live in a
 >    dedicated "grouping params" table rather than a metadata/settings table?
 >    If so, what is its PK/FK structure?
-> 2. Backward-compatibility mechanism for v1/v2 coexistence: Oasis LMF v2.6.0
->    supports v1 and v2 in parallel until January 2028 — version flag on the
->    analysis record vs. separate table sets vs. a conversion view?
-> 3. Should `SummaryInfo`/`GroupSummaryInfo` gain explicit boolean output-type
+> 2. Should `SummaryInfo`/`GroupSummaryInfo` gain explicit boolean output-type
 >    flag columns (`qelt`, `qplt`, and the rest of `ord_output`), mirroring the
 >    results metadata schema, or should that stay file/JSON-only?
+>
+> **Resolved:** a v1/v2 backward-compatibility mechanism was previously raised
+> as a third open question. Per the design principle above, this doesn't apply
+> at the ORD level — the ORD relational model only needs to define v2, since
+> it's a new addition to the specification rather than a revision of a
+> previously-published one. Any parallel v1/v2 support is a platform-level
+> decision, not an ORD requirement.
 
 ORD covers an extensive suite of model outputs for multiple perspectives and calculations. The key ORD outputs and the ones most typically used in cat modelling are the exceedance probability (EP) curves.
 

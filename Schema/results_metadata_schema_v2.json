@@ -2,7 +2,7 @@
     "$schema": "http://oasislmf.org/results_metadata/draft/schema#",
     "type": "object",
     "title": "ORD results metadata",
-    "description": "Captures metadata about an ORD analysis result set, including analysis identification, model information, event set details, output summary levels, exposure summary, and grouping context. The schema is structured as a mandatory platform-neutral core with optional vendor-specific extension blocks. Fields specific to the Oasis LMF platform are grouped under oasis_platform. Schema v2 incorporates ORD working group feedback through September 2026 including GroupMethod codes, nullable event_set fields, and platform-neutral perspective_code handling.",
+    "description": "Captures metadata about an ORD analysis result set, including analysis identification, model information, event set details, output summary levels, exposure summary, and grouping context. The schema is structured as a mandatory platform-neutral core with two optional extension blocks: platform_settings (generic, structured fields for cross-platform concepts such as PLA, disaggregation, and correlation modelling — any platform populates the fields it supports) and vendor_settings (free-form vendor/key/value triples for anything not otherwise captured). Schema v2 incorporates ORD working group feedback through September 2026 including GroupMethod codes, nullable event_set fields, platform-neutral perspective_code handling, and the platform_settings/vendor_settings rescoping (previously oasis_platform/vendor_extensions) to keep ORD decoupled from any single implementer.",
     "definitions": {
         "summary_set": {
             "type": "object",
@@ -386,10 +386,10 @@
                 }
             }
         },
-        "oasis_platform": {
+        "platform_settings": {
             "type": "object",
-            "title": "Oasis LMF platform-specific settings",
-            "description": "Optional block for settings that are specific to the Oasis LMF platform. Other platforms are not expected to populate this block. Oasis-specific fields that were previously at the top level (oed_version, pla, pla_settings, do_disaggregation, join_summary_info, correlation_settings) are consolidated here. This follows the same pattern used in OED for non-standard fields.",
+            "title": "Platform settings",
+            "description": "Optional block of generic, structured fields for cross-platform concepts (PLA, disaggregation, correlation modelling) that don't belong in the platform-neutral core because not every platform models them, or models them the same way. Any platform populates the fields it supports and leaves the rest absent. Renamed from oasis_platform in an earlier draft — these fields were originally identified from Oasis LMF's implementation, but are described generically here so any platform can use them, keeping ORD decoupled from any single implementer.",
             "properties": {
                 "oed_version": {
                     "type": "string",
@@ -439,7 +439,7 @@
                 "correlation_settings": {
                     "type": "array",
                     "title": "Correlation settings",
-                    "description": "Hazard and damage correlation settings used in the analysis. This reflects Oasis LMF's internal correlation model; other vendors apply correlation within the model before output and may not expose these parameters in results metadata.",
+                    "description": "Hazard and damage correlation settings used in the analysis. Populate this where a platform's correlation model exposes these parameters (e.g. Oasis LMF's internal correlation model); other platforms may apply correlation within the model before output and have nothing to report here.",
                     "items": {
                         "type": "object",
                         "properties": {
@@ -451,13 +451,31 @@
                 }
             }
         },
-        "vendor_extensions": {
-            "type": "object",
-            "title": "Vendor extensions",
-            "description": "Optional block for platform-specific fields not covered by the platform-neutral core or the oasis_platform block. Vendors (Moody's, Verisk, RMS, etc.) may populate this with fields relevant to their platform. The sub-object key should identify the vendor or platform (e.g. 'verisk', 'moodys'). Fields added here will be considered for promotion to the core schema in future versions if they have broad applicability.",
-            "additionalProperties": {
+        "vendor_settings": {
+            "type": "array",
+            "title": "Vendor settings",
+            "description": "Optional free-form array of vendor/key/value triples for platform-specific fields not covered by the platform-neutral core or platform_settings. Vendors (Moody's, Verisk, RMS, etc.) add one entry per field they want to report. Mirrors the VendorExtension table in the relational model (analysis_id, vendor, key, value). Renamed and restructured from vendor_extensions (previously a nested object keyed by vendor name) in an earlier draft. Fields added here will be considered for promotion to the core schema or to platform_settings in future versions if they have broad applicability.",
+            "items": {
                 "type": "object",
-                "description": "Vendor-specific extension object. The internal structure is defined by the vendor."
+                "title": "Vendor setting",
+                "properties": {
+                    "vendor": {
+                        "type": "string",
+                        "title": "Vendor",
+                        "description": "Identifies the vendor or platform this setting belongs to (e.g. 'verisk', 'moodys')."
+                    },
+                    "key": {
+                        "type": "string",
+                        "title": "Key",
+                        "description": "The setting's name, in whatever convention the vendor uses."
+                    },
+                    "value": {
+                        "type": "string",
+                        "title": "Value",
+                        "description": "The setting's value. Free-form string — encode structured values (e.g. as JSON text) if needed."
+                    }
+                },
+                "required": ["vendor", "key"]
             }
         }
     },
