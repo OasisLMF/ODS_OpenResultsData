@@ -69,7 +69,7 @@
                 "perspective_code": {
                     "type": "string",
                     "title": "Perspective code",
-                    "description": "Loss perspective for this output set. Used as a compatibility key for grouping analyses. Well-known Oasis/OED values are 'gul' (ground-up loss), 'il' (insured loss), and 'ri' (reinsurance net). Other modelling platforms may use different conventions; the value should be consistent within a grouping operation."
+                    "description": "Loss perspective for this output set. Used as a compatibility key for grouping analyses. Well-known Oasis/OED values are 'gul' (ground-up loss), 'il' (insured loss), 'ri' (reinsurance net — the cedant's loss retained after reinsurance recoveries), and 'rl' (reinsurance loss — the ceded amount recovered from reinsurers, as distinct from 'ri'). Other modelling platforms may use different conventions; the value should be consistent within a grouping operation."
                 },
                 "exposure_summary_level_fields": {
                     "type": "array",

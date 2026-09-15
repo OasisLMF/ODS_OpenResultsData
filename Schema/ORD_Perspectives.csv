@@ -1,6 +1,6 @@
 ﻿ORD - Perspective Options,,,,,,,,
 ,,,,,,,,
-"ORD v2 note: perspective_code is a free string, not a locked enum. Well-known Oasis/OED values are gul, il, ri. The list below is illustrative of possible perspectives, not exhaustive or fixed.",,,,,,,,
+"ORD v2 note: perspective_code is a free string, not a locked enum. Well-known Oasis/OED values are gul, il, ri (reinsurance net, i.e. cedant's retained loss), and rl (reinsurance loss, i.e. ceded amount recovered from reinsurers). The list below is illustrative of possible perspectives, not exhaustive or fixed.",,,,,,,,
 ,,,,,,,,
 Perspective,ResultsPerspective,,,,,,,
 0,Ground-up,,currently in Oasis,,,,,

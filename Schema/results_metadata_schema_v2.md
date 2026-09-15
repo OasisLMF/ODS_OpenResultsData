@@ -97,7 +97,7 @@ perspective's worth of output.
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `perspective_code` | string | **yes** | The loss perspective, e.g. `gul` (ground-up loss), `il` (insured loss), `ri` (reinsurance net). These three are the well-known Oasis/OED values — **not a locked enum**; other platforms may use their own conventions. Used as a compatibility key when grouping analyses, and must be consistent within a grouping operation. |
+| `perspective_code` | string | **yes** | The loss perspective, e.g. `gul` (ground-up loss), `il` (insured loss), `ri` (reinsurance net), `rl` (reinsurance loss / ceded). These four are the well-known Oasis/OED values — **not a locked enum**; other platforms may use their own conventions. Used as a compatibility key when grouping analyses, and must be consistent within a grouping operation. |
 | `exposure_summary_level_fields` | array of string | | The fields used to define exposure summary levels for this output set (OED field names, or the equivalent for other exposure standards). Also a grouping-compatibility key. |
 | `summaries` | array of [Summary set](#summary-set) | | The summary sets produced under this output set. |
 
@@ -288,14 +288,15 @@ and/or `CONV` loss inputs.
 
 ### `perspective_code` well-known values
 
-Not an enum — any string is valid — but these three are the well-known
+Not an enum — any string is valid — but these four are the well-known
 Oasis/OED values:
 
 | Code | Meaning |
 |---|---|
 | `gul` | Ground-up loss |
 | `il` | Insured loss |
-| `ri` | Reinsurance net |
+| `ri` | Reinsurance net — the cedant's loss retained after reinsurance recoveries |
+| `rl` | Reinsurance loss — the ceded amount recovered from reinsurers (distinct from `ri`) |
 
 ### `exposure_standard` well-known values
 
