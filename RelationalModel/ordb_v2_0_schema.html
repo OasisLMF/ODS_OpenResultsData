@@ -1,0 +1,272 @@
+
+<style>
+  #erd{width:100%;height:640px;overflow:hidden;border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-tertiary);background:var(--color-background-tertiary)}
+  .ctrls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:8px;font-size:12px;color:var(--color-text-secondary)}
+  .legend-dot{width:10px;height:10px;border-radius:3px;display:inline-block;vertical-align:middle}
+  .legend-item{display:flex;align-items:center;gap:4px}
+</style>
+<div id="erd"><svg id="svg" style="width:100%;height:100%"></svg></div>
+<div class="ctrls">
+  <span style="opacity:.6">Scroll to zoom · Drag to pan · Hover to highlight relationships</span>
+  <button onclick="resetZoom()">Reset view</button>
+</div>
+<div class="ctrls" id="legend"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>
+const dk=matchMedia('(prefers-color-scheme:dark)').matches;
+const CW=150,HD=26,FH=18,PB=8;
+const P={
+  config:{bg:dk?'#262050':'#EEEDFE',hd:dk?'#7F77DD':'#534AB7',ht:'#fff',tx:dk?'#CECBF6':'#3C3489',bd:dk?'rgba(83,74,183,.30)':'rgba(175,169,236,.45)',lb:'Analysis, settings & exposure'},
+  bridge:{bg:dk?'#04342C':'#E1F5EE',hd:dk?'#1D9E75':'#0F6E56',ht:'#fff',tx:dk?'#9FE1CB':'#085041',bd:dk?'rgba(15,110,86,.50)':'rgba(93,202,165,.65)',lb:'Output sets'},
+  results:{bg:dk?'#3a170c':'#FAECE7',hd:dk?'#D85A30':'#993C1D',ht:'#fff',tx:dk?'#F5C4B3':'#712B13',bd:dk?'rgba(153,60,29,.30)':'rgba(240,153,123,.45)',lb:'Analysis results'},
+  group:{bg:dk?'#0c2a4a':'#E6F1FB',hd:dk?'#378ADD':'#185FA5',ht:'#fff',tx:dk?'#B5D4F4':'#0C447C',bd:dk?'rgba(24,95,165,.30)':'rgba(133,183,235,.45)',lb:'Group & event'},
+  gresults:{bg:dk?'#331c04':'#FAEEDA',hd:dk?'#BA7517':'#854F0B',ht:'#fff',tx:dk?'#FAC775':'#633806',bd:dk?'rgba(133,79,11,.30)':'rgba(239,159,39,.45)',lb:'Group results'},
+  lookup:{bg:dk?'#252523':'#F1EFE8',hd:dk?'#888780':'#5F5E5A',ht:'#fff',tx:dk?'#D3D1C7':'#444441',bd:dk?'rgba(95,94,90,.30)':'rgba(180,178,169,.45)',lb:'Lookup tables & metadata (new in v2.0)'}
+};
+
+const S=168;
+const LX=20, RX=1000;
+const LKX=770, LKTX=805;
+const BY=350;
+
+const T=[
+  {id:'Analysis',c:'config',x:LX+20,y:58,f:[{n:'id',t:'PK'}]},
+  {id:'ExposureFiles',c:'config',x:LX+20+S,y:58,f:[{n:'id',t:'PK'},{n:'analysis_id',t:'FK'}]},
+  {id:'Versions',c:'config',x:LX+20+S*2,y:58,f:[{n:'id',t:'PK'},{n:'analysis_id',t:'FK'}]},
+  {id:'ExposureSummary',c:'config',x:LX+20+S*3,y:58,f:[{n:'id',t:'PK'},{n:'analysis_id',t:'FK'}]},
+  {id:'Settings',c:'config',x:LX+20,y:150,f:[{n:'id',t:'PK'},{n:'analysis_id',t:'FK'}]},
+  {id:'ModelSettings',c:'config',x:LX+20+S,y:150,f:[{n:'id',t:'PK'},{n:'settings_id',t:'FK'}]},
+  {id:'CorrelationSettings',c:'config',x:LX+20+S*2,y:150,f:[{n:'id',t:'PK'},{n:'model_settings_id',t:'FK'}]},
+  {id:'ExposureCoverage',c:'config',x:LX+20+S*3,y:150,f:[{n:'id',t:'PK'},{n:'exposure_summary_id',t:'FK'}]},
+  {id:'AnalysisCurrency',c:'config',x:LX+20,y:242,f:[{n:'analysis_id',t:'FK'}]},
+  {id:'VendorExtension',c:'config',x:LX+20+S,y:242,f:[{n:'id',t:'PK'},{n:'analysis_id',t:'FK'}]},
+
+  {id:'OutputSet',c:'bridge',x:180,y:370,f:[{n:'id',t:'PK'},{n:'settings_id',t:'FK'}]},
+  {id:'SummaryInfo',c:'bridge',x:370,y:370,f:[{n:'id',t:'PK'},{n:'output_set_id',t:'FK'}]},
+
+  {id:'AAL',c:'results',x:LX+20,y:568,f:[{n:'output_set_id',t:'FK'}]},
+  {id:'ELT',c:'results',x:LX+20+S,y:506,f:[{n:'output_set_id',t:'FK'}]},
+  {id:'ELT_Samples',c:'results',x:LX+20+S,y:568,f:[{n:'output_set_id',t:'FK'}]},
+  {id:'ELT_Quantile',c:'results',x:LX+20+S,y:630,f:[{n:'output_set_id',t:'FK'}]},
+  {id:'PLT',c:'results',x:LX+20+S*2,y:506,f:[{n:'output_set_id',t:'FK'}]},
+  {id:'PLT_Samples',c:'results',x:LX+20+S*2,y:568,f:[{n:'output_set_id',t:'FK'}]},
+  {id:'PLT_Quantile',c:'results',x:LX+20+S*2,y:630,f:[{n:'output_set_id',t:'FK'}]},
+  {id:'EP',c:'results',x:LX+20+S*3,y:506,f:[{n:'output_set_id',t:'FK'}]},
+  {id:'EP_Samples',c:'results',x:LX+20+S*3,y:568,f:[{n:'output_set_id',t:'FK'}]},
+
+  {id:'DbAttribute',c:'lookup',x:LKTX,y:58,f:[]},
+  {id:'LossMethod',c:'lookup',x:LKTX,y:102,f:[{n:'id',t:'PK'}]},
+  {id:'EPMethod',c:'lookup',x:LKTX,y:164,f:[{n:'id',t:'PK'}]},
+  {id:'EPType',c:'lookup',x:LKTX,y:226,f:[{n:'id',t:'PK'}]},
+  {id:'GroupMethod',c:'lookup',x:LKTX,y:288,f:[{n:'id',t:'PK'}]},
+
+  {id:'ResultsGroup',c:'group',x:RX+20,y:58,f:[{n:'id',t:'PK'}]},
+  {id:'GroupAnalysis',c:'group',x:RX+20+S,y:58,f:[{n:'group_id',t:'FK'},{n:'analysis_id',t:'FK'}]},
+  {id:'ResultsGroupGroup',c:'group',x:RX+20+S*2,y:58,f:[{n:'parent_group_id',t:'FK'},{n:'child_group_id',t:'FK'}]},
+  {id:'GroupEventSet',c:'group',x:RX+20,y:150,f:[{n:'id',t:'PK'},{n:'group_id',t:'FK'},{n:'evt_occ_set_id',t:'FK'}]},
+  {id:'EventOccurrenceSet',c:'group',x:RX+20+S,y:150,f:[{n:'id',t:'PK'}]},
+  {id:'GroupOutputSet',c:'group',x:RX+20+S*2,y:150,f:[{n:'group_set_id',t:'FK'},{n:'output_set_id',t:'FK'}]},
+  {id:'GroupEventSetAnalysis',c:'group',x:RX+20,y:258,f:[{n:'grp_evt_set_id',t:'FK'},{n:'analysis_id',t:'FK'}]},
+  {id:'EventOccurrence',c:'group',x:RX+20+S,y:258,f:[{n:'evt_occ_set_id',t:'FK'}]},
+
+  {id:'GroupSet',c:'bridge',x:1160,y:370,f:[{n:'id',t:'PK'},{n:'group_id',t:'FK'}]},
+  {id:'GroupSummaryInfo',c:'bridge',x:1350,y:370,f:[{n:'id',t:'PK'},{n:'group_set_id',t:'FK'}]},
+
+  {id:'GAAL',c:'gresults',x:1140,y:506,f:[{n:'group_set_id',t:'FK'}]},
+  {id:'GEP',c:'gresults',x:1330,y:506,f:[{n:'group_set_id',t:'FK'}]},
+  {id:'GELT',c:'gresults',x:1140,y:568,f:[{n:'group_set_id',t:'FK'}]},
+  {id:'GPLT',c:'gresults',x:1330,y:568,f:[{n:'group_set_id',t:'FK'},{n:'grp_evt_set_id',t:'FK'}]}
+];
+
+const tm=Object.fromEntries(T.map(t=>[t.id,t]));
+function th(t){return Math.max(HD+(t.f.length||0)*FH+PB,HD+PB)}
+
+const R=[
+  ['ExposureFiles','analysis_id','Analysis','id'],
+  ['Versions','analysis_id','Analysis','id'],
+  ['Settings','analysis_id','Analysis','id'],
+  ['ModelSettings','settings_id','Settings','id'],
+  ['CorrelationSettings','model_settings_id','ModelSettings','id'],
+  ['OutputSet','settings_id','Settings','id'],
+  ['ExposureSummary','analysis_id','Analysis','id'],
+  ['SummaryInfo','output_set_id','OutputSet','id'],
+  ['ExposureCoverage','exposure_summary_id','ExposureSummary','id'],
+  ['AnalysisCurrency','analysis_id','Analysis','id'],
+  ['VendorExtension','analysis_id','Analysis','id'],
+  ['GroupAnalysis','group_id','ResultsGroup','id'],
+  ['GroupAnalysis','analysis_id','Analysis','id'],
+  ['ResultsGroupGroup','parent_group_id','ResultsGroup','id'],
+  ['ResultsGroupGroup','child_group_id','ResultsGroup','id'],
+  ['GroupSet','group_id','ResultsGroup','id'],
+  ['GroupOutputSet','group_set_id','GroupSet','id'],
+  ['GroupOutputSet','output_set_id','OutputSet','id'],
+  ['GroupEventSet','group_id','ResultsGroup','id'],
+  ['GroupEventSet','evt_occ_set_id','EventOccurrenceSet','id'],
+  ['GroupSummaryInfo','group_set_id','GroupSet','id'],
+  ['GroupEventSetAnalysis','grp_evt_set_id','GroupEventSet','id'],
+  ['GroupEventSetAnalysis','analysis_id','Analysis','id'],
+  ['EventOccurrence','evt_occ_set_id','EventOccurrenceSet','id'],
+  ['ELT','output_set_id','OutputSet','id'],
+  ['AAL','output_set_id','OutputSet','id'],
+  ['EP','output_set_id','OutputSet','id'],
+  ['EP','EPMethodId','EPMethod','id'],
+  ['EP','EPTypeId','EPType','id'],
+  ['PLT','output_set_id','OutputSet','id'],
+  ['ELT_Quantile','output_set_id','OutputSet','id'],
+  ['ELT_Samples','output_set_id','OutputSet','id'],
+  ['EP_Samples','output_set_id','OutputSet','id'],
+  ['EP_Samples','EPTypeId','EPType','id'],
+  ['PLT_Quantile','output_set_id','OutputSet','id'],
+  ['PLT_Samples','output_set_id','OutputSet','id'],
+  ['GAAL','group_set_id','GroupSet','id'],
+  ['GAAL','group_event_set_id','GroupEventSet','id'],
+  ['GAAL','GroupMethodId','GroupMethod','id'],
+  ['GEP','group_set_id','GroupSet','id'],
+  ['GEP','group_event_set_id','GroupEventSet','id'],
+  ['GEP','GroupMethodId','GroupMethod','id'],
+  ['GELT','group_set_id','GroupSet','id'],
+  ['GPLT','group_set_id','GroupSet','id'],
+  ['GPLT','grp_evt_set_id','GroupEventSet','id'],
+  ['GPLT','GroupMethodId','GroupMethod','id']
+];
+
+const clusters=[
+  {id:'config',x:LX,y:28,w:715,h:320},
+  {id:'lookup',x:LKX,y:28,w:220,h:322},
+  {id:'group',x:RX,y:28,w:525,h:312},
+  {id:'results',x:LX,y:480,w:715,h:218},
+  {id:'gresults',x:1118,y:480,w:382,h:160}
+];
+const bridgeZones=[
+  {x:155,y:BY,w:390,h:100,label:'OutputSet'},
+  {x:1135,y:BY,w:390,h:100,label:'GroupSet'}
+];
+
+const svg=d3.select('#svg');
+svg.append('defs').append('marker').attr('id','fk-arrow').attr('viewBox','0 0 10 10').attr('refX',9).attr('refY',5).attr('markerWidth',5).attr('markerHeight',5).attr('orient','auto-start-reverse')
+  .append('path').attr('d','M2 2L8 5L2 8').attr('fill','none').attr('stroke',dk?'rgba(255,255,255,.3)':'rgba(0,0,0,.2)').attr('stroke-width',1.5).attr('stroke-linecap','round');
+const g=svg.append('g');
+const lnC=dk?'rgba(255,255,255,.14)':'rgba(0,0,0,.09)';
+const lnH=dk?'rgba(255,255,255,.55)':'rgba(0,0,0,.40)';
+
+clusters.forEach(cl=>{
+  const p=P[cl.id];
+  g.append('rect').attr('x',cl.x).attr('y',cl.y).attr('width',cl.w).attr('height',cl.h)
+    .attr('rx',12).attr('fill',p.bg).attr('stroke',p.bd).attr('stroke-width',.5);
+  g.append('text').attr('x',cl.x+12).attr('y',cl.y+18)
+    .attr('font-size',11).attr('font-weight',500).attr('fill',p.hd).attr('opacity',.7).text(p.lb);
+});
+bridgeZones.forEach(bz=>{
+  g.append('rect').attr('x',bz.x).attr('y',bz.y).attr('width',bz.w).attr('height',bz.h)
+    .attr('rx',10).attr('fill',P.bridge.bg).attr('stroke',P.bridge.bd)
+    .attr('stroke-width',1).attr('stroke-dasharray','6 4');
+  g.append('text').attr('x',bz.x+12).attr('y',bz.y+16)
+    .attr('font-size',10).attr('font-weight',500).attr('fill',P.bridge.hd).attr('opacity',.6).text(bz.label);
+});
+
+const flowColor=P.bridge.hd;
+[[255,348,255,BY],[1235,340,1235,BY],[255,450,255,480],[1235,450,1235,480]].forEach(([x1,y1,x2,y2])=>{
+  g.append('line').attr('x1',x1).attr('y1',y1).attr('x2',x2).attr('y2',y2)
+    .attr('stroke',flowColor).attr('stroke-width',2).attr('opacity',.25)
+    .attr('stroke-dasharray','4 4').attr('marker-end','url(#fk-arrow)');
+});
+
+function fy(t,fn){const i=t.f.findIndex(f=>f.n===fn);return t.y+HD+Math.max(i,0)*FH+FH/2}
+
+function mkPath(child,cf,parent,pf){
+  const ct=tm[child],pt=tm[parent];
+  const ch2=th(ct),ph=th(pt);
+  const ccx=ct.x+CW/2,pcx=pt.x+CW/2;
+  const ccy=ct.y+ch2/2,pcy=pt.y+ph/2;
+  const dx=Math.abs(ccx-pcx),dy=Math.abs(ccy-pcy);
+  if(dx<CW*0.8&&dy>40){
+    const above=ct.y>pt.y;
+    const sy=above?ct.y:ct.y+ch2;
+    const ey=above?pt.y+ph:pt.y;
+    const bend=Math.min(Math.abs(sy-ey)*0.4,60);
+    return`M${ccx},${sy}C${ccx},${sy+(above?-bend:bend)} ${pcx},${ey+(above?bend:-bend)} ${pcx},${ey}`;
+  }
+  let x1,y1,x2,y2;
+  if(dx>dy*0.3||dy<40){
+    if(ccx<pcx){x1=ct.x+CW;x2=pt.x}else{x1=ct.x;x2=pt.x+CW}
+    y1=fy(ct,cf);y2=fy(pt,pf);
+  }else{
+    x1=ccx;x2=pcx;
+    if(ccy<pcy){y1=ct.y+ch2;y2=pt.y}else{y1=ct.y;y2=pt.y+ph}
+  }
+  const sx=Math.abs(x2-x1)*0.35;
+  const bx=ccx<pcx?sx:-sx;
+  return`M${x1},${y1}C${x1+bx},${y1} ${x2-bx},${y2} ${x2},${y2}`;
+}
+
+const lines=g.append('g');
+R.forEach(([child,cf,parent,pf])=>{
+  const isCross=(tm[child].x>750&&tm[parent].x<750)||(tm[child].x<750&&tm[parent].x>750);
+  lines.append('path').attr('d',mkPath(child,cf,parent,pf))
+    .attr('fill','none').attr('stroke',lnC).attr('stroke-width',isCross?1.2:1)
+    .attr('stroke-dasharray',isCross?'5 3':null)
+    .attr('data-child',child).attr('data-parent',parent).attr('class','rel-line');
+});
+
+T.forEach(t=>{
+  const p=P[t.c],h=th(t);
+  const isBridge=(t.id==='OutputSet'||t.id==='GroupSet');
+  const tg=g.append('g').attr('class','tbl').attr('data-id',t.id).style('cursor','pointer');
+  tg.append('rect').attr('x',t.x).attr('y',t.y).attr('width',CW).attr('height',h)
+    .attr('rx',6).attr('fill',dk?'rgba(0,0,0,.30)':'#fff')
+    .attr('stroke',isBridge?p.hd:p.bd).attr('stroke-width',isBridge?1.5:.5);
+  tg.append('rect').attr('x',t.x).attr('y',t.y).attr('width',CW).attr('height',HD)
+    .attr('rx',6).attr('fill',p.hd);
+  tg.append('rect').attr('x',t.x).attr('y',t.y+HD-4).attr('width',CW).attr('height',4).attr('fill',p.hd);
+  const nc=t.id.length;
+  const fs=nc>18?9.5:nc>15?10.5:nc>13?11:12;
+  tg.append('text').attr('x',t.x+CW/2).attr('y',t.y+HD/2)
+    .attr('text-anchor','middle').attr('dominant-baseline','central')
+    .attr('font-size',fs).attr('font-weight',500).attr('fill',p.ht).text(t.id);
+  t.f.forEach((f,i)=>{
+    const fy2=t.y+HD+i*FH+FH/2;
+    const bc=f.t==='PK'?(dk?'rgba(255,255,255,.12)':'rgba(0,0,0,.08)'):(dk?'rgba(255,255,255,.06)':'rgba(0,0,0,.04)');
+    const btc=f.t==='PK'?p.hd:(dk?'rgba(255,255,255,.45)':'rgba(0,0,0,.35)');
+    tg.append('rect').attr('x',t.x+5).attr('y',fy2-7).attr('width',18).attr('height',14).attr('rx',3).attr('fill',bc);
+    tg.append('text').attr('x',t.x+14).attr('y',fy2).attr('text-anchor','middle').attr('dominant-baseline','central')
+      .attr('font-size',9).attr('font-weight',500).attr('fill',btc).text(f.t);
+    tg.append('text').attr('x',t.x+27).attr('y',fy2).attr('dominant-baseline','central')
+      .attr('font-size',11).attr('fill',p.tx).text(f.n);
+  });
+  tg.on('mouseenter',()=>{
+    d3.selectAll('.rel-line').attr('stroke',lnC).attr('stroke-width',1).attr('opacity',.3);
+    d3.selectAll('.rel-line').filter(function(){
+      return d3.select(this).attr('data-child')===t.id||d3.select(this).attr('data-parent')===t.id;
+    }).attr('stroke',lnH).attr('stroke-width',2.5).attr('opacity',1).raise();
+    d3.selectAll('.tbl').style('opacity',.18);
+    tg.style('opacity',1);
+    const rel=new Set();
+    R.forEach(([ch,,pa])=>{if(ch===t.id)rel.add(pa);if(pa===t.id)rel.add(ch)});
+    d3.selectAll('.tbl').filter(function(){return rel.has(d3.select(this).attr('data-id'))}).style('opacity',1);
+  }).on('mouseleave',()=>{
+    d3.selectAll('.rel-line').each(function(){
+      const el=d3.select(this);
+      const ch=el.attr('data-child'),pa=el.attr('data-parent');
+      const cross=(tm[ch].x>750&&tm[pa].x<750)||(tm[ch].x<750&&tm[pa].x>750);
+      el.attr('stroke',lnC).attr('stroke-width',cross?1.2:1).attr('opacity',1).attr('stroke-dasharray',cross?'5 3':null);
+    });
+    d3.selectAll('.tbl').style('opacity',1);
+  });
+});
+
+const zoom=d3.zoom().scaleExtent([.2,3]).on('zoom',e=>g.attr('transform',e.transform));
+svg.call(zoom);
+const cw=document.getElementById('erd').clientWidth,che=640;
+const sc=Math.min(cw/1540,che/730)*.88;
+const txv=(cw-1540*sc)/2,tyv=(che-730*sc)/2;
+const initT=d3.zoomIdentity.translate(txv,tyv).scale(sc);
+svg.call(zoom.transform,initT);
+window.resetZoom=()=>svg.transition().duration(400).call(zoom.transform,initT);
+
+const leg=document.getElementById('legend');
+[P.config,P.bridge,P.results,P.group,P.gresults,P.lookup].forEach(p=>{
+  const d=document.createElement('div');d.className='legend-item';
+  d.innerHTML=`<span class="legend-dot" style="background:${p.hd}"></span><span>${p.lb}</span>`;
+  leg.appendChild(d);
+});
+</script>
