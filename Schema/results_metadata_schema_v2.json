@@ -1,0 +1,487 @@
+{
+    "$schema": "http://oasislmf.org/results_metadata/draft/schema#",
+    "type": "object",
+    "title": "ORD results metadata",
+    "description": "Captures metadata about an ORD analysis result set, including analysis identification, model information, event set details, output summary levels, exposure summary, and grouping context. The schema is structured as a mandatory platform-neutral core with two optional extension blocks: platform_settings (generic, structured fields for cross-platform concepts such as PLA, disaggregation, and correlation modelling — any platform populates the fields it supports) and vendor_settings (free-form vendor/key/value triples for anything not otherwise captured). Schema v2 incorporates ORD working group feedback through September 2026 including GroupMethod codes, nullable event_set fields, platform-neutral perspective_code handling, and the platform_settings/vendor_settings rescoping (previously oasis_platform/vendor_extensions) to keep ORD decoupled from any single implementer.",
+    "definitions": {
+        "summary_set": {
+            "type": "object",
+            "title": "Summary set",
+            "description": "Describes a summary level and the ORD outputs produced for it.",
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "title": "Summary ID",
+                    "description": "Identifier for the summary set, corresponding to SummaryId in ORD output files."
+                },
+                "description": {
+                    "type": "string",
+                    "title": "Summary description",
+                    "description": "Human-readable label for this summary level (e.g. 'Res', 'Com', 'Total'). Corresponds to SummaryDescription in ORDB."
+                },
+                "grouping_fields": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "title": "Grouping fields",
+                    "description": "Fields used to group losses for this summary level. For OED-based analyses these are OED field names (e.g. ['LOB']); for other exposure standards (CEDE, EDM) these are the corresponding field names from that standard. Corresponds to SummaryField in ORDB."
+                },
+                "oed_fields": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "title": "OED fields (deprecated alias)",
+                    "description": "Deprecated alias for grouping_fields retained for backward compatibility. Use grouping_fields in new implementations.",
+                    "deprecated": true
+                },
+                "ord_output": {
+                    "type": "object",
+                    "title": "ORD outputs produced",
+                    "description": "Flags indicating which ORD output files were produced for this summary set.",
+                    "properties": {
+                        "elt_moment":              { "type": "boolean", "title": "ELT (Moment)",              "description": "Moment Event Loss Table was produced.",                                         "default": false },
+                        "elt_sample":              { "type": "boolean", "title": "ELT (Samples)",             "description": "Sample Event Loss Table was produced.",                                         "default": false },
+                        "elt_quantile":            { "type": "boolean", "title": "ELT (Quantile)",            "description": "Quantile Event Loss Table was produced.",                                       "default": false },
+                        "plt_moment":              { "type": "boolean", "title": "PLT (Moment)",              "description": "Moment Period Loss Table was produced.",                                        "default": false },
+                        "plt_sample":              { "type": "boolean", "title": "PLT (Samples)",             "description": "Sample Period Loss Table was produced.",                                        "default": false },
+                        "plt_quantile":            { "type": "boolean", "title": "PLT (Quantile)",            "description": "Quantile Period Loss Table was produced.",                                      "default": false },
+                        "alt_period":              { "type": "boolean", "title": "AAL (Period)",              "description": "Period Average Annual Loss table was produced.",                                 "default": false },
+                        "alt_meanonly":            { "type": "boolean", "title": "AAL (Mean Only)",           "description": "Average Annual Loss table without standard deviation was produced.",            "default": false },
+                        "ept_full_uncertainty_aep":{ "type": "boolean", "title": "EP - Full Uncertainty AEP","description": "Full uncertainty aggregate exceedance probability curve was produced.",           "default": false },
+                        "ept_full_uncertainty_oep":{ "type": "boolean", "title": "EP - Full Uncertainty OEP","description": "Full uncertainty occurrence exceedance probability curve was produced.",          "default": false },
+                        "ept_mean_sample_aep":     { "type": "boolean", "title": "EP - Mean Sample AEP",     "description": "Mean sample aggregate exceedance probability curve was produced.",               "default": false },
+                        "ept_mean_sample_oep":     { "type": "boolean", "title": "EP - Mean Sample OEP",     "description": "Mean sample occurrence exceedance probability curve was produced.",              "default": false },
+                        "ept_per_sample_mean_aep": { "type": "boolean", "title": "EP - Per Sample Mean AEP", "description": "Per-sample mean aggregate exceedance probability curve was produced.",          "default": false },
+                        "ept_per_sample_mean_oep": { "type": "boolean", "title": "EP - Per Sample Mean OEP", "description": "Per-sample mean occurrence exceedance probability curve was produced.",         "default": false },
+                        "psept_aep":               { "type": "boolean", "title": "PSEPT - AEP",              "description": "Per Sample Exceedance Probability Table (aggregate) was produced.",             "default": false },
+                        "psept_oep":               { "type": "boolean", "title": "PSEPT - OEP",              "description": "Per Sample Exceedance Probability Table (occurrence) was produced.",            "default": false },
+                        "qelt":                    { "type": "boolean", "title": "QELT",                     "description": "Quantile Event Loss Table (quantile-based EP variant) was produced.",           "default": false },
+                        "qplt":                    { "type": "boolean", "title": "QPLT",                     "description": "Quantile Period Loss Table (quantile-based EP variant) was produced.",          "default": false }
+                    }
+                }
+            },
+            "required": ["id"]
+        },
+        "output_set": {
+            "type": "object",
+            "title": "Output set",
+            "description": "Describes the outputs produced for a given loss perspective. The perspective_code and exposure_summary_level_fields together define the compatibility criteria for grouping analyses.",
+            "properties": {
+                "perspective_code": {
+                    "type": "string",
+                    "title": "Perspective code",
+                    "description": "Loss perspective for this output set. Used as a compatibility key for grouping analyses. Well-known Oasis/OED values are 'gul' (ground-up loss), 'il' (insured loss), 'ri' (reinsurance net — the cedant's loss retained after reinsurance recoveries), and 'rl' (reinsurance loss — the ceded amount recovered from reinsurers, as distinct from 'ri'). Other modelling platforms may use different conventions; the value should be consistent within a grouping operation."
+                },
+                "exposure_summary_level_fields": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "title": "Exposure summary level fields",
+                    "description": "Fields used to define exposure summary levels for this output set. Used as a compatibility key for grouping analyses. For OED-based analyses these are OED field names; for other exposure standards, the equivalent field names from that standard."
+                },
+                "summaries": {
+                    "type": "array",
+                    "title": "Summary sets",
+                    "description": "Summary sets produced for this output set.",
+                    "items": { "$ref": "#/definitions/summary_set" }
+                }
+            },
+            "required": ["perspective_code"]
+        },
+        "alpha_by_model": {
+            "type": "object",
+            "title": "Alpha by model",
+            "description": "Gaussian copula correlation alpha value specified at the model level.",
+            "properties": {
+                "model_supplier_id": { "type": "string", "title": "Model supplier ID" },
+                "model_name_id":     { "type": "string", "title": "Model name ID" },
+                "alpha": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "title": "Alpha",
+                    "description": "Gaussian copula correlation parameter for this model."
+                }
+            },
+            "required": ["model_supplier_id", "model_name_id", "alpha"]
+        },
+        "alpha_by_summary": {
+            "type": "object",
+            "title": "Alpha by model and summary level",
+            "description": "Gaussian copula correlation alpha value at the model + perspective + summary level.",
+            "properties": {
+                "model_supplier_id": { "type": "string", "title": "Model supplier ID" },
+                "model_name_id":     { "type": "string", "title": "Model name ID" },
+                "perspective_code": {
+                    "type": "string",
+                    "title": "Perspective code",
+                    "description": "Loss perspective code. See output_set.perspective_code."
+                },
+                "summary_id": { "type": "integer", "minimum": 1, "title": "Summary ID" },
+                "alpha": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "title": "Alpha"
+                }
+            },
+            "required": ["model_supplier_id", "model_name_id", "perspective_code", "summary_id", "alpha"]
+        },
+        "tiv_by_coverage": {
+            "type": "object",
+            "title": "TIV by coverage type",
+            "description": "Total insured value broken down by coverage type. Standard OED types (buildings, other, contents, bi) are always included; extended types are zero-filled where not applicable.",
+            "properties": {
+                "buildings": { "type": "number", "minimum": 0, "title": "Buildings",               "default": 0 },
+                "other":     { "type": "number", "minimum": 0, "title": "Other structures",        "default": 0 },
+                "contents":  { "type": "number", "minimum": 0, "title": "Contents",                "default": 0 },
+                "bi":        { "type": "number", "minimum": 0, "title": "Business interruption",   "default": 0 },
+                "binp":      { "type": "number", "minimum": 0, "title": "BI - non-physical",       "default": 0 },
+                "cbi":       { "type": "number", "minimum": 0, "title": "Contingent BI",           "default": 0 },
+                "dias":      { "type": "number", "minimum": 0, "title": "DIAS",                    "default": 0 },
+                "ext":       { "type": "number", "minimum": 0, "title": "Extended coverage",       "default": 0 },
+                "fin":       { "type": "number", "minimum": 0, "title": "Fine arts / inland marine","default": 0 },
+                "inre":      { "type": "number", "minimum": 0, "title": "Inland / re",             "default": 0 },
+                "liab":      { "type": "number", "minimum": 0, "title": "Liability",               "default": 0 },
+                "reg":       { "type": "number", "minimum": 0, "title": "Regulatory",              "default": 0 },
+                "eno":       { "type": "number", "minimum": 0, "title": "Errors and omissions",    "default": 0 }
+            }
+        },
+        "exposure_summary_peril": {
+            "type": "object",
+            "title": "Exposure summary for a peril",
+            "description": "Exposure counts and TIV for a single peril. All count fields should always be emitted and zero-filled where not applicable.",
+            "properties": {
+                "number_of_locations": { "type": "integer", "minimum": 0, "title": "Number of locations", "default": 0 },
+                "number_of_buildings": { "type": "integer", "minimum": 0, "title": "Number of buildings", "default": 0 },
+                "number_of_risks":     { "type": "integer", "minimum": 0, "title": "Number of risks",     "default": 0 },
+                "tiv_by_coverage":     { "$ref": "#/definitions/tiv_by_coverage" }
+            }
+        }
+    },
+    "properties": {
+        "version": {
+            "type": "string",
+            "title": "Results metadata schema version",
+            "description": "The schema version for results metadata validation."
+        },
+        "analysis_id": {
+            "type": ["integer", "string"],
+            "title": "Analysis ID",
+            "description": "Unique identifier for this analysis result set. The naming convention may differ between platforms (e.g. Oasis uses 'analysis_id'; other vendors may use different identifiers). This field captures the platform-native identifier verbatim."
+        },
+        "source_tag": {
+            "type": ["integer", "string"],
+            "minLength": 1,
+            "title": "Source tag",
+            "description": "Labels the origin of the analysis (e.g. platform or portfolio name)."
+        },
+        "analysis_tag": {
+            "type": ["integer", "string"],
+            "minLength": 1,
+            "title": "Analysis tag",
+            "description": "Human-readable label for the analysis."
+        },
+        "model_supplier_id": {
+            "type": "string",
+            "title": "Model supplier ID",
+            "description": "Identifier for the model vendor/supplier. Used as a compatibility key for grouping analyses."
+        },
+        "model_name_id": {
+            "type": "string",
+            "title": "Model name ID",
+            "description": "Identifier for the model used to produce these results."
+        },
+        "model_version": {
+            "type": "string",
+            "title": "Model version",
+            "description": "Version of the model used to produce these results."
+        },
+        "model_description": {
+            "type": "string",
+            "title": "Model description",
+            "description": "Human-readable description of the model."
+        },
+        "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created at",
+            "description": "ISO 8601 datetime at which the analysis was run (e.g. 2026-05-01T12:00:00Z)."
+        },
+        "currency": {
+            "type": "array",
+            "title": "Currency",
+            "description": "ISO 4217 currency code(s) of the output losses. Expressed as an array to accommodate multi-currency outputs (e.g. grouped analyses combining results across jurisdictions run in different currencies). For a single-currency analysis, supply an array of one element.",
+            "items": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 3,
+                "pattern": "^[A-Z]{3}$",
+                "description": "ISO 4217 three-letter currency code (e.g. 'USD', 'GBP', 'EUR')."
+            },
+            "minItems": 1
+        },
+        "number_of_samples": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Number of samples",
+            "description": "The number of samples generated per event in this analysis. Meaningful for stochastic (STOC) analyses; may be absent or zero for analytical (ANLM) or convolution (CONV) methods."
+        },
+        "loss_methods": {
+            "type": "array",
+            "title": "Loss methods",
+            "description": "LossMethod codes present in the ORD output files for this analysis (e.g. ['STOC', 'ANLM']). Allows downstream consumers to determine available LossMethods without reading potentially large output files.",
+            "items": {
+                "type": "string",
+                "title": "LossMethod code",
+                "description": "Short code identifying the loss calculation method. Known values: MEAN (analytical mean; formerly ANLM in ORD v1), STOC (stochastic sampling), CONV (numerical convolution). Note: MEAN/ANLM is not valid as a GroupMethod — GroupMethods operate on STOC and/or CONV inputs only."
+            }
+        },
+        "ep_methods": {
+            "type": "array",
+            "title": "EP methods",
+            "description": "EPMethod codes present in the ORD output files for this analysis (e.g. ['A_MEAN', 'S_FULL', 'S_PSMN']). Allows downstream consumers to determine available EPMethods without reading potentially large output files.",
+            "items": {
+                "type": "string",
+                "title": "EPMethod code",
+                "description": "Short code identifying the EP calculation method. Known values: A_MEAN (analytical mean), S_FULL (stochastic full uncertainty), S_PSMN (stochastic per-sample mean), S_MEAN (stochastic mean), C_MEAN (convolution mean), C_PARA (convolution with parametric uncertainty)."
+            }
+        },
+        "c_para_distribution_type": {
+            "type": "string",
+            "title": "C_PARA distribution type",
+            "description": "The parametric distribution type used when EPMethod C_PARA is present. This field is required if 'C_PARA' appears in ep_methods. The value should identify the distribution clearly (e.g. 'Beta', 'Gamma'). The field is intentionally free-form rather than a fixed enumeration to allow for additional distributions without schema changes."
+        },
+        "event_set": {
+            "type": "object",
+            "title": "Event set",
+            "description": "Identifies the event set and occurrence set used in this analysis. These fields contribute to GroupEventSet identification in grouped analyses. All properties are nullable so that a GroupEventSet ID can be generated on any subset of populated fields; the subset used is controlled by the group_event_set_fields parameter (see ORD Combining Results §7.2). Where a field is not applicable or not known, it should be populated as null rather than omitted.",
+            "properties": {
+                "event_set_id": {
+                    "type": ["string", "null"],
+                    "title": "Event set ID",
+                    "description": "Locally unique identifier of the event set file used in the analysis. Null if not applicable or not recorded."
+                },
+                "event_set_description": {
+                    "type": ["string", "null"],
+                    "title": "Event set description",
+                    "description": "Human-readable description of the event set. Null if not applicable or not recorded."
+                },
+                "event_occurrence_id": {
+                    "type": ["string", "null"],
+                    "title": "Event occurrence ID",
+                    "description": "Locally unique identifier of the occurrence set file used in the analysis. Null if not applicable or not recorded."
+                },
+                "event_occurrence_description": {
+                    "type": ["string", "null"],
+                    "title": "Event occurrence description",
+                    "description": "Human-readable description of the occurrence set. Null if not applicable or not recorded."
+                },
+                "event_occurrence_max_periods": {
+                    "type": ["integer", "null"],
+                    "minimum": 1,
+                    "title": "Event occurrence max periods",
+                    "description": "The timespan of the occurrence set expressed as a number of periods. Directly constrains the minimum valid group_number_of_periods in a grouped analysis; absence or null is a functional gap for grouping operations. Null if not applicable or not recorded."
+                }
+            }
+        },
+        "peril_filter": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "type": "string",
+                "minLength": 2,
+                "title": "Peril code",
+                "description": "A peril identifier code. For OED-based analyses these are OED three-letter peril codes (e.g. 'WSS', 'ORF'). Other exposure standards may use different codes."
+            },
+            "title": "Peril filter",
+            "description": "Peril codes the analysis was filtered to. The code format depends on the exposure standard in use (see exposure_standard). Absent if no filter was applied."
+        },
+        "exposure_standard": {
+            "type": "string",
+            "title": "Exposure standard",
+            "description": "The exposure data standard used for the input portfolio. Well-known values: 'OED' (Open Exposure Data), 'CEDE' (Moody's/AIR), 'EDM' (RMS/Verisk). Other values are permitted for platforms using proprietary standards.",
+            "examples": ["OED", "CEDE", "EDM"]
+        },
+        "output_sets": {
+            "type": "array",
+            "title": "Output sets",
+            "description": "The output sets produced by this analysis, one entry per loss perspective (e.g. GUL, IL, RI).",
+            "items": { "$ref": "#/definitions/output_set" }
+        },
+        "exposure_summary": {
+            "type": "object",
+            "title": "Exposure summary",
+            "description": "Summary of the exposure processed in this analysis, keyed by peril code. For OED-based analyses keys are OED three-letter peril codes (e.g. 'WSS', 'ORF'); for other exposure standards the equivalent peril codes from that standard are used. All count fields should be emitted and zero-filled where not applicable.",
+            "additionalProperties": {
+                "$ref": "#/definitions/exposure_summary_peril"
+            }
+        },
+        "grouping": {
+            "type": "object",
+            "title": "Grouping settings",
+            "description": "Settings relating to ORD grouped analysis. Populated when this analysis is part of, or a candidate for, a grouped result. Grouped output tables (GPLT, GALT, GEPT) use a GroupMethod code rather than an EPMethod code; return periods in grouped tables are determined by relative frequency of group events rather than EP curve construction.",
+            "properties": {
+                "group_methods": {
+                    "type": "array",
+                    "title": "Group methods",
+                    "description": "GroupMethod codes present in the grouped ORD output files (e.g. ['RSAM', 'RSSD']). Analogous to loss_methods and ep_methods for grouped results. GroupMethod describes how group event losses are derived from underlying per-model event losses. Note: the analytical mean (LossMethod MEAN, formerly ANLM) is explicitly excluded as a GroupMethod — all GroupMethods operate on stochastic (STOC) and/or convolution (CONV) loss inputs only. The GroupMethod–LossMethod relationship is non-exclusive: all three GroupMethods can combine STOC and CONV inputs; RSSD additionally requires decomposed event standard deviations.",
+                    "items": {
+                        "type": "string",
+                        "title": "GroupMethod code",
+                        "description": "Short code identifying the group loss calculation method. Known values: MEAN — Grouped Means (group losses derive from summed/maximum event mean of underlying analyses); RSAM — Resampled secondary uncertainty (group event losses from summed/maximum of resampled losses from underlying event severity distributions; inter-GroupEventSet correlation is zero or imposed by alpha factors); RSSD — Resampled secondary uncertainty using sum of decomposed event standard deviations (group event losses from resampled losses; group event standard deviations from summing of decomposed correlated and independent standard deviations capturing internally derived correlation by event; requires decomposed event standard deviations in input ELTs).",
+                        "examples": ["MEAN", "RSAM", "RSSD"]
+                    }
+                },
+                "group_event_set_id": {
+                    "type": "string",
+                    "title": "Group event set ID",
+                    "description": "Identifier for the event set group this analysis belongs to. Analyses sharing a group_event_set_id have compatible event sets and can be grouped. Determined by model_supplier_id and other configurable metadata fields. The internal structure of this identifier may vary between platforms — implementations should treat it as an opaque string for comparison purposes rather than assuming a specific format."
+                },
+                "group_number_of_periods": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "title": "Group number of periods",
+                    "description": "Number of periods used in the grouped analysis. Must be at least the largest number of periods across all event sets being grouped (see event_set.event_occurrence_max_periods)."
+                },
+                "group_elt_format_selection": {
+                    "type": "string",
+                    "title": "Group ELT format selection",
+                    "description": "Which ELT format is used for loss severity sampling in the grouped analysis.",
+                    "enum": ["moment", "quantile", "sample"]
+                },
+                "group_fill_perspectives": {
+                    "type": "boolean",
+                    "title": "Group fill perspectives",
+                    "description": "Whether missing perspectives are filled from available ones during grouping (e.g. net produced from gross).",
+                    "default": false
+                },
+                "was_filled": {
+                    "type": "boolean",
+                    "title": "Was filled",
+                    "description": "Whether this output set's perspective was filled from another perspective during grouping (e.g. net filled from gross). Allows downstream consumers to detect fills without inferring from perspective codes.",
+                    "default": false
+                },
+                "source_perspective": {
+                    "type": "string",
+                    "title": "Source perspective",
+                    "description": "If was_filled is true, the perspective code of the source used to fill this output set. See output_set.perspective_code."
+                },
+                "global_alpha": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "title": "Global alpha",
+                    "description": "Global Gaussian copula correlation parameter applied across all models in the group. Overridden by alpha_by_model or alpha_by_summary where specified."
+                },
+                "alpha_by_model": {
+                    "type": "array",
+                    "title": "Alpha by model",
+                    "description": "Correlation alpha values at the model level, overriding global_alpha for those models.",
+                    "items": { "$ref": "#/definitions/alpha_by_model" }
+                },
+                "alpha_by_summary": {
+                    "type": "array",
+                    "title": "Alpha by model and summary level",
+                    "description": "Correlation alpha values at the model + perspective + summary level. Takes precedence over alpha_by_model and global_alpha.",
+                    "items": { "$ref": "#/definitions/alpha_by_summary" }
+                }
+            }
+        },
+        "platform_settings": {
+            "type": "object",
+            "title": "Platform settings",
+            "description": "Optional block of generic, structured fields for cross-platform concepts (PLA, disaggregation, correlation modelling) that don't belong in the platform-neutral core because not every platform models them, or models them the same way. Any platform populates the fields it supports and leaves the rest absent. Renamed from oasis_platform in an earlier draft — these fields were originally identified from Oasis LMF's implementation, but are described generically here so any platform can use them, keeping ORD decoupled from any single implementer.",
+            "properties": {
+                "oed_version": {
+                    "type": "string",
+                    "title": "OED schema version",
+                    "description": "The OED schema version of the input exposure file - 'major.minor.patch' format (e.g. 2.0.0 or v2.0.0). Only applicable when exposure_standard is 'OED'.",
+                    "minLength": 5,
+                    "pattern": "v?\\d+\\.\\d+\\.\\d+|latest version"
+                },
+                "pla": {
+                    "type": "boolean",
+                    "title": "Post Loss Amplification applied",
+                    "description": "Whether Post Loss Amplification was applied to the losses.",
+                    "default": false
+                },
+                "pla_settings": {
+                    "type": "object",
+                    "title": "PLA settings",
+                    "description": "Post Loss Amplification settings, if pla is true.",
+                    "properties": {
+                        "pla_secondary_factor": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1,
+                            "title": "PLA secondary factor",
+                            "default": 1
+                        },
+                        "pla_uniform_factor": {
+                            "type": "number",
+                            "minimum": 0,
+                            "title": "PLA uniform factor",
+                            "default": 0
+                        }
+                    }
+                },
+                "do_disaggregation": {
+                    "type": "boolean",
+                    "title": "Disaggregation applied",
+                    "description": "Whether OED disaggregation was applied to split terms and conditions for aggregate exposure.",
+                    "default": true
+                },
+                "join_summary_info": {
+                    "type": "boolean",
+                    "title": "Summary info joined",
+                    "description": "Whether summary info data was joined to output files.",
+                    "default": false
+                },
+                "correlation_settings": {
+                    "type": "array",
+                    "title": "Correlation settings",
+                    "description": "Hazard and damage correlation settings used in the analysis. Populate this where a platform's correlation model exposes these parameters (e.g. Oasis LMF's internal correlation model); other platforms may apply correlation within the model before output and have nothing to report here.",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "peril_correlation_group":  { "type": "integer", "minimum": 1, "title": "Peril correlation group" },
+                            "hazard_correlation_value": { "type": "number", "minimum": 0, "maximum": 1, "title": "Hazard correlation value" },
+                            "damage_correlation_value": { "type": "number", "minimum": 0, "maximum": 1, "title": "Damage correlation value" }
+                        }
+                    }
+                }
+            }
+        },
+        "vendor_settings": {
+            "type": "array",
+            "title": "Vendor settings",
+            "description": "Optional free-form array of vendor/key/value triples for platform-specific fields not covered by the platform-neutral core or platform_settings. Vendors (Moody's, Verisk, RMS, etc.) add one entry per field they want to report. Mirrors the VendorExtension table in the relational model (analysis_id, vendor, key, value). Renamed and restructured from vendor_extensions (previously a nested object keyed by vendor name) in an earlier draft. Fields added here will be considered for promotion to the core schema or to platform_settings in future versions if they have broad applicability.",
+            "items": {
+                "type": "object",
+                "title": "Vendor setting",
+                "properties": {
+                    "vendor": {
+                        "type": "string",
+                        "title": "Vendor",
+                        "description": "Identifies the vendor or platform this setting belongs to (e.g. 'verisk', 'moodys')."
+                    },
+                    "key": {
+                        "type": "string",
+                        "title": "Key",
+                        "description": "The setting's name, in whatever convention the vendor uses."
+                    },
+                    "value": {
+                        "type": "string",
+                        "title": "Value",
+                        "description": "The setting's value. Free-form string — encode structured values (e.g. as JSON text) if needed."
+                    }
+                },
+                "required": ["vendor", "key"]
+            }
+        }
+    },
+    "required": [
+        "model_supplier_id",
+        "model_name_id",
+        "output_sets"
+    ]
+}

@@ -1,8 +1,8 @@
 MPLT,,,QPLT,,,SPLT,,,MELT,,,QELT,,,SELT,,,ALT,,,EPT,,,PSEPT,
 Field,Data Type,,Field,Data Type,,Field,Data Type,,Field,Data Type,,Field,Data Type,,Field,Data Type,,Field,Data Type,,Field,Data Type,,Field,Data Type
 Period,32-bit integer,,Period,32-bit integer,,Period,32-bit integer,,EventId,32-bit integer,,EventId,32-bit integer,,EventId,32-bit integer,,SummaryId,32-bit integer,,SummaryId,32-bit integer,,SummaryId,32-bit integer
-PeriodWeight,float,,PeriodWeight,float,,PeriodWeight,float,,SummaryId,32-bit integer,,SummaryId,32-bit integer,,SummaryId,32-bit integer,,SampleType,32-bit integer,,EPCalc,32-bit integer,,SampleId,32-bit integer
-EventId,32-bit integer,,EventId,32-bit integer,,EventId,32-bit integer,,SampleType,32-bit integer,,Quantile,float,,SampleId,32-bit integer,,MeanLoss,float,,EPType,32-bit integer,,EPType,32-bit integer
+PeriodWeight,float,,PeriodWeight,float,,PeriodWeight,float,,SummaryId,32-bit integer,,SummaryId,32-bit integer,,SummaryId,32-bit integer,,SampleType,32-bit integer,,EPMethod,string (ORD v2; was EPCalc 32-bit integer in v1),,SampleId,32-bit integer
+EventId,32-bit integer,,EventId,32-bit integer,,EventId,32-bit integer,,SampleType,32-bit integer,,Quantile,float,,SampleId,32-bit integer,,MeanLoss,float,,EPType,string (ORD v2; was 32-bit integer in v1),,EPType,string (ORD v2; was 32-bit integer in v1)
 Year,32-bit integer,,Year,32-bit integer,,Year,32-bit integer,,EventRate,float,,Loss,float,,Loss,float,,SDLoss,float,,ReturnPeriod,float,,ReturnPeriod,float
 Month,32-bit integer,,Month,32-bit integer,,Month,32-bit integer,,ChanceOfLoss,float,,,,,ImpactedExposure,float,,,,,Loss,float,,Loss,float
 Day,32-bit integer,,Day,32-bit integer,,Day,32-bit integer,,MeanLoss,float,,,,,,,,,,,,,,,
