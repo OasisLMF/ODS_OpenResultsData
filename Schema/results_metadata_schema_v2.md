@@ -59,7 +59,6 @@ Everything else is optional, filled in where applicable/known.
 | `number_of_samples` | integer | | Number of samples generated per event. Only meaningful for stochastic (`STOC`) analyses — may be absent or zero for analytical (`MEAN`) or convolution (`CONV`) methods. |
 | `loss_methods` | array of string | | Which [LossMethod codes](#lossmethod-codes) appear in this analysis's output files, e.g. `["STOC"]`. Lets a consumer know what's in the files without reading them. |
 | `ep_methods` | array of string | | Which [EPMethod codes](#epmethod-codes) appear in the output files, e.g. `["A_MEAN", "S_FULL", "S_PSMN"]`. |
-| `c_para_distribution_type` | string | conditional | The parametric distribution used (e.g. `"Beta"`, `"Gamma"`) — **required if `"C_PARA"` appears in `ep_methods`**. Deliberately free-form, not a fixed list, so new distributions don't need a schema change. |
 | `event_set` | object | | See [Event set](#event-set). |
 | `peril_filter` | array of string | | Peril codes the analysis was filtered to (at least one). OED-based analyses use OED's three-letter peril codes (e.g. `"WSS"`, `"ORF"`); other exposure standards use their own. Omitted entirely if no filter was applied. |
 | `exposure_standard` | string | | The exposure data standard for the input portfolio. Well-known values: `OED`, `CEDE` (Moody's/AIR), `EDM` (RMS/Verisk) — other values are allowed for proprietary standards. |
@@ -303,7 +302,6 @@ stochastic (`STOC`), `C_` = convolution (`CONV`).
 | `S_PSMN` | Stochastic per-sample mean |
 | `S_MEAN` | Stochastic mean |
 | `C_MEAN` | Convolution mean |
-| `C_PARA` | Convolution with parametric uncertainty — requires `c_para_distribution_type` |
 
 ### GroupMethod codes
 

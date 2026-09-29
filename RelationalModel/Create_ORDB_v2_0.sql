@@ -85,7 +85,7 @@
            `vw_*` view per affected results table to reconstruct the string
            codes for consumers.
            Added lookup tables: LossMethod (STOC, CONV, MEAN — renamed from
-           ANLM), EPMethod (A_MEAN, S_FULL, S_PSMN, S_MEAN, C_MEAN, C_PARA),
+           ANLM), EPMethod (A_MEAN, S_FULL, S_PSMN, S_MEAN, C_MEAN),
            EPType (OEP, AEP, TVAR_OEP, TVAR_AEP — replaces legacy 1-4 ints),
            GroupMethod (MEAN, RSAM, RSSD — new, for grouped analyses; MEAN here
            is the LossMethod's analytical mean and is excluded from GroupMethod).
@@ -107,10 +107,9 @@
            mean "not one of the fields used" rather than a default placeholder.
            Settings.number_of_samples: removed stale DEFAULT 0 (meaningful only
            for STOC LossMethod; NULL now means not applicable rather than 0).
-           Added Settings.c_para_distribution_type, Settings.oed_version,
-           Settings.join_summary_info to cover new results-metadata-schema-v2
-           fields. Added Analysis.exposure_standard. Added child tables
-           AnalysisCurrency (multi-currency support for grouped analyses,
+           Added Settings.oed_version, Settings.join_summary_info to cover new
+           results-metadata-schema-v2 fields. Added Analysis.exposure_standard.
+           Added child tables AnalysisCurrency (multi-currency support for grouped analyses,
            replacing single-value Analysis.currency for v2) and VendorExtension
            (open-ended platform-specific key/value metadata).
            Updated DBVERSION seed data to 2.0.0 (ODSVERSION was already seeded
@@ -297,8 +296,7 @@ VALUES
     ('S_FULL', 'STOC', 'Stochastic full uncertainty'),
     ('S_PSMN', 'STOC', 'Stochastic per-sample mean'),
     ('S_MEAN', 'STOC', 'Stochastic mean'),
-    ('C_MEAN', 'CONV', 'Convolution mean'),
-    ('C_PARA', 'CONV', 'Convolution with parametric uncertainty');
+    ('C_MEAN', 'CONV', 'Convolution mean');
 GO
 
 TRUNCATE TABLE dbo.EPType;
@@ -413,7 +411,6 @@ BEGIN
         do_disaggregation    BIT            NULL DEFAULT 0,
         model_supplier_id    NVARCHAR(100)  NULL DEFAULT '',
         ri_output            BIT            NULL DEFAULT 0,
-        c_para_distribution_type   NVARCHAR(50)  NULL, -- required (by convention) when EPMethod C_PARA is present; free-form, e.g. 'Beta', 'Gamma'
         oed_version                NVARCHAR(20)  NULL, -- OED schema version of the input exposure, e.g. '2.0.0'; applicable only when exposure_standard = 'OED'
         join_summary_info          BIT           NULL DEFAULT 0,
         CONSTRAINT FK_Settings_Analysis_analysis_id

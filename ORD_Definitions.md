@@ -62,7 +62,6 @@ calculated, independent of any specific output table:
 | `S_PSMN` | 3 (Per Sample Mean) | Stochastic per-sample mean — the average of the losses at each return period of the Per Sample EPT (see PSEPT below). |
 | `S_MEAN` | 4 (Sample Mean) | Stochastic mean — the loss calculation for a year using the statistical sample event mean. |
 | `C_MEAN` | (new) | Convolution mean. |
-| `C_PARA` | (new) | Convolution with parametric uncertainty. When present, the distribution type used is recorded in results metadata as `c_para_distribution_type` (free-form string). |
 
 The code prefix indicates the associated LossMethod: `A_` → `MEAN` (analytical),
 `S_` → `STOC` (stochastic), `C_` → `CONV` (convolution).

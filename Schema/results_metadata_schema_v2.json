@@ -242,13 +242,8 @@
             "items": {
                 "type": "string",
                 "title": "EPMethod code",
-                "description": "Short code identifying the EP calculation method. Known values: A_MEAN (analytical mean), S_FULL (stochastic full uncertainty), S_PSMN (stochastic per-sample mean), S_MEAN (stochastic mean), C_MEAN (convolution mean), C_PARA (convolution with parametric uncertainty)."
+                "description": "Short code identifying the EP calculation method. Known values: A_MEAN (analytical mean), S_FULL (stochastic full uncertainty), S_PSMN (stochastic per-sample mean), S_MEAN (stochastic mean), C_MEAN (convolution mean)."
             }
-        },
-        "c_para_distribution_type": {
-            "type": "string",
-            "title": "C_PARA distribution type",
-            "description": "The parametric distribution type used when EPMethod C_PARA is present. This field is required if 'C_PARA' appears in ep_methods. The value should identify the distribution clearly (e.g. 'Beta', 'Gamma'). The field is intentionally free-form rather than a fixed enumeration to allow for additional distributions without schema changes."
         },
         "event_set": {
             "type": "object",
