@@ -8,9 +8,12 @@ Results,Moment Event Loss Table,MELT,"Summary stats (mean, SD etc) for each even
 Results,Sample Period Loss Table,SPLT,Sample losses for each event within each period at the appropriate summary level ,No,,
 Results,Quantile Period Loss Table,QPLT,Distribution of losses at user specified quantiles for each event within each period at the appropriate summary level,No,,
 Results,Moment Period Loss Table,MPLT,"Summary stats (mean, SD etc) for each event within each period at the appropriate summary level",Yes,PLT,"Hour, Minute, ChanceOfLoss, MaxLoss, FootprintExposure, FootprintNumLocs, MeanImapctedExposure, MeanNumLocs, MaxImpactedExposure, MaxImpactedLoss"
-Results,Average Loss Table,ALT,"AAL, SD",Yes,AAL,"SourceExposure, SourceNumLocs"
-Results,Exceedance Probability Table,EPT,Exceedance probabilities for VARs and TVaRs of maximum and aggregate event losses in a period,Yes,OEP,
+Results,Average Loss Table,ALT,"AAL, SD",Yes,AAL,"SourceExposure, SourceNumLocs, LossMethod (ORD v2)"
+Results,Exceedance Probability Table,EPT,Exceedance probabilities for VARs and TVaRs of maximum and aggregate event losses in a period,Yes,OEP,"SDLoss, MaxLoss (optional, ORD v2)"
 Results,Per Sample Exceedance Probability,PSEPT,Exceedance probabilities for VARs and TVaRs of maximum and aggregate event losses in a period for each sample,Yes,OEP,
+Results,Group Period Loss Table,GPLT,"Grouped period losses combining compatible analyses (ORD v2); uses GroupMethod (not EPMethod) and requires GroupEventSetId",No,,GroupMethod column (new in ORD v2)
+Results,Group Annual Loss Table,GALT,"Grouped AAL combining compatible analyses (ORD v2); uses GroupMethod (not EPMethod/LossMethod) and requires GroupEventSetId",No,,GroupMethod column (new in ORD v2)
+Results,Group Exceedance Probability Table,GEPT,"Grouped EP curve (ORD v2); uses GroupMethod (not EPMethod) with ReturnPeriod derived from relative frequency of group events, and requires GroupEventSetId",No,,GroupMethod column (new in ORD v2)
 Results,Error Log,ELOG,Contains error codes for locations that were failed to be processed by the model,Yes,,
 Results,Aggregate summaries of exposure within model domain,DOMEXP,Model specific so needs to be in the Results area,No,,
 Results,Aggregate summaries of rejected exposure by reason rejected,REJEXP,Model specific so needs to be in the Results area,No,,
