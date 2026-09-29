@@ -81,6 +81,17 @@ The code prefix indicates the associated LossMethod: `A_` → `MEAN` (analytical
 
 **Loss:** Modelled loss
 
+**SDLoss** (optional, ORD v2): Sample standard deviation of loss at the return
+period, around the sample mean EP curve.
+
+**MaxLoss** (optional, ORD v2): Maximum loss at the return period, around the
+sample mean EP curve.
+
+`SDLoss` and `MaxLoss` let platforms that calculate uncertainty around the
+sample mean EP curve (e.g. Verisk) report it alongside the curve. They are most
+relevant to EPMethod `S_MEAN`, and are null where not calculated. Oasis's own EP
+generation does not populate them at present.
+
 &nbsp;
 
 ## Per Sample Exceedance Probability Table (PSEPT)

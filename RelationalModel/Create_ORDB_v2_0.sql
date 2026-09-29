@@ -93,7 +93,9 @@
            EPTypeId (FK → EPType). EP_Samples: EPType (INT) → EPTypeId (FK →
            EPType). AAL: added LossMethodId (FK → LossMethod), included in the
            primary key so an output set can hold AAL rows for more than one
-           LossMethod.
+           LossMethod. EP: added optional SDLoss and MaxLoss (nullable) — the
+           sample standard deviation and maximum of loss at each return period
+           around the sample mean EP curve, for platforms that calculate it.
            Grouped tables use GroupMethod in place of LossMethod/EPMethod —
            GroupMethod replaces LossType on GAAL and GPLT, and replaces
            EPCalc+EPType on GEP (GEP's ReturnPeriod is now relative-frequency-
@@ -770,6 +772,8 @@ BEGIN
         EPTypeId        INT   NOT NULL, -- v2.0: replaces EPType (INT code) — FK to EPType lookup
         ReturnPeriod    NUMERIC(9,2) NOT NULL DEFAULT 0.0,
         Loss            FLOAT NULL,
+        SDLoss          FLOAT NULL, -- v2.0: optional — sample SD of loss at this return period around the sample mean EP curve
+        MaxLoss         FLOAT NULL, -- v2.0: optional — maximum loss at this return period around the sample mean EP curve
         CONSTRAINT PK_EP PRIMARY KEY CLUSTERED (output_set_id, SummaryId, EPMethodId, EPTypeId, ReturnPeriod),
         CONSTRAINT FK_EP_OutputSet_output_set_id
             FOREIGN KEY (output_set_id) REFERENCES dbo.OutputSet(id),
@@ -1085,7 +1089,7 @@ GO
 IF OBJECT_ID('dbo.vw_EP', 'V') IS NOT NULL DROP VIEW dbo.vw_EP;
 GO
 CREATE VIEW dbo.vw_EP AS
-SELECT e.output_set_id, e.SummaryId, em.Code AS EPMethod, et.Code AS EPType, e.ReturnPeriod, e.Loss
+SELECT e.output_set_id, e.SummaryId, em.Code AS EPMethod, et.Code AS EPType, e.ReturnPeriod, e.Loss, e.SDLoss, e.MaxLoss
 FROM dbo.EP e
 JOIN dbo.EPMethod em ON em.id = e.EPMethodId
 JOIN dbo.EPType et ON et.id = e.EPTypeId;

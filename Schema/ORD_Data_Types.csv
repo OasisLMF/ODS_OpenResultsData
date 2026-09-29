@@ -5,8 +5,8 @@ PeriodWeight,float,,PeriodWeight,float,,PeriodWeight,float,,SummaryId,32-bit int
 EventId,32-bit integer,,EventId,32-bit integer,,EventId,32-bit integer,,SampleType,32-bit integer,,Quantile,float,,SampleId,32-bit integer,,SampleType,32-bit integer,,EPType,string (ORD v2; was 32-bit integer in v1),,EPType,string (ORD v2; was 32-bit integer in v1),,Period,32-bit integer,,GroupMethod,string,,GroupMethod,string
 Year,32-bit integer,,Year,32-bit integer,,Year,32-bit integer,,EventRate,float,,Loss,float,,Loss,float,,MeanLoss,float,,ReturnPeriod,float,,ReturnPeriod,float,,EventId,32-bit integer,,MeanLoss,float,,ReturnPeriod,float
 Month,32-bit integer,,Month,32-bit integer,,Month,32-bit integer,,ChanceOfLoss,float,,,,,ImpactedExposure,float,,SDLoss,float,,Loss,float,,Loss,float,,GroupMethod,string,,SDLoss,float,,Loss,float
-Day,32-bit integer,,Day,32-bit integer,,Day,32-bit integer,,MeanLoss,float,,,,,,,,,,,,,,,,,Loss,float,,,,,,
-Hour,32-bit integer,,Hour,32-bit integer,,Hour,32-bit integer,,SDLoss,float,,,,,,,,,,,,,,,,,,,,,,,,
+Day,32-bit integer,,Day,32-bit integer,,Day,32-bit integer,,MeanLoss,float,,,,,,,,,,,SDLoss,"float (optional, ORD v2)",,,,,Loss,float,,,,,,
+Hour,32-bit integer,,Hour,32-bit integer,,Hour,32-bit integer,,SDLoss,float,,,,,,,,,,,MaxLoss,"float (optional, ORD v2)",,,,,,,,,,,,
 Minute,32-bit integer,,Minute,32-bit integer,,Minute,32-bit integer,,MaxLoss,float,,,,,,,,,,,,,,,,,,,,,,,,
 SummaryId,32-bit integer,,SummaryId,32-bit integer,,SummaryId,32-bit integer,,FootprintExposure,float,,,,,,,,,,,,,,,,,,,,,,,,
 SampleType,32-bit integer,,Quantile,float,,SampleId,32-bit integer,,MeanImpactedExposure,float,,,,,,,,,,,,,,,,,,,,,,,,
