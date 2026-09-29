@@ -5,19 +5,19 @@ Blue italic text,Not a field as such - rather a structure within a json file,,,,
 ,,,,,,,
 ,,,,,,,
 Category,Table/File,File Format,Proposed Field Name,Current Field Name,Field Name Description,Comment,Additional Field (compared to Oasis)
-Results,"ALT,EPT,PSEPT,MELT,MPLT,SELT,SPLT,QELT,QPLT",csv,SummaryId,summary_id,Summary ID,,
+Results,"ALT,EPT,PSEPT,MELT,MPLT,SELT,SPLT,QELT,QPLT,GPLT,GALT,GEPT",csv,SummaryId,summary_id,Summary ID,,
 Results,"ALT,MELT",csv,SampleType,type,Indicator whether mean loss is analytical (SampleType=1) or sampled (SampleType=2),changed from 'type' to be a little less generic,
-Results,"ALT,MELT,MPLT",csv,MeanLoss,mean,Mean loss,,
-Results,"ALT,MELT,MPLT",csv,SDLoss,standard_deviation,Standard Deviation,,
+Results,"ALT,MELT,MPLT,GALT",csv,MeanLoss,mean,Mean loss,,
+Results,"ALT,MELT,MPLT,GALT",csv,SDLoss,standard_deviation,Standard Deviation,,
 Results,ALT,csv,SourceExposure,exposure_value,Exposure Value,,
 Results,"MELT,MPLT",csv,FootprintExposure,,Exposure in the event footprint,,Yes
 Results,"SELT,SPLT",csv,ImpactedExposure,,Exposure impacted by the event (where loss > 0),,Yes
 Results,"PSEPT,SELT,SPLT",csv,SampleId,sidx,Sample number,For sample analyses only,
-Results,"EPT, PSEPT",csv,ReturnPeriod,return_period,Return period,,
-Results,"EPT,PSEPT,SELT,SPLT,QELT,QPLT",csv,Loss,loss,Loss,,
+Results,"EPT, PSEPT, GEPT",csv,ReturnPeriod,return_period,Return period,,
+Results,"EPT,PSEPT,SELT,SPLT,QELT,QPLT,GPLT,GEPT",csv,Loss,loss,Loss,,
 Results,MPLT,csv,SampleType,,Indicator whether mean loss is analytical (SampleType=1) or sampled (SampleType=2),changed from 'type' to be a little less generic,Yes
-Results,"MELT,MPLT,SELT,SPLT,QELT,QPLT",csv,EventId,event_id,Event ID,,
-Results,"MPLT,QPLT,SPLT",csv,Period,period_no,Period No,,
+Results,"MELT,MPLT,SELT,SPLT,QELT,QPLT,GPLT",csv,EventId,event_id,Event ID,,
+Results,"MPLT,QPLT,SPLT,GPLT",csv,Period,period_no,Period No,,
 Results,"MPLT,QPLT,SPLT",csv,Year,occ_year,Occurrence Year,,
 Results,"MPLT,QPLT,SPLT",csv,Month,occ_month,Occurrence Month,,
 Results,"MPLT,QPLT,SPLT",csv,Day,occ_day,Occurrence Day,,
@@ -122,5 +122,6 @@ Results,"MELT,MPLT",csv,MaxImpacted Exposure,,Max exposure that has been affecte
 Results,"MELT,MPLT",csv,FootprintNumLocs,,Number of locations in the event footprint,,Yes
 Results,"EPT, PSEPT",csv,EPType,,"String code for type of EP curve (ORD v2): OEP, AEP, TVAR_OEP, TVAR_AEP.",Was integer 1=OEP/2=OEP TVAR/3=AEP/4=AEP TVAR in ORD v1; renamed to string code in ORD v2,
 Results,EPT,csv,EPMethod,EPCalc,"String code for EP calculation method (ORD v2): A_MEAN, S_FULL, S_PSMN, S_MEAN, C_MEAN. Prefix indicates LossMethod (A_=MEAN, S_=STOC, C_=CONV).",Was integer EPCalc (1=MeanDR/2=Full/3=PerSampleMean/4=MeanSample) in ORD v1; renamed EPMethod with string codes in ORD v2,
-Results,"ALT,GALT",csv,LossMethod,LossType,"String code for loss calculation method: MEAN (analytical mean), STOC (stochastic sampling), CONV (numerical convolution).",Renamed from LossType in ORD v2; MEAN was ANLM in ORD v1,
+Results,ALT,csv,LossMethod,LossType,"String code for loss calculation method: MEAN (analytical mean), STOC (stochastic sampling), CONV (numerical convolution).",Renamed from LossType in ORD v2; MEAN was ANLM in ORD v1,
 Results,"GPLT,GALT,GEPT",csv,GroupMethod,,"String code for grouped-analysis calculation method: MEAN, RSAM, RSSD. Used on grouped output tables in place of EPMethod (no EP variants needed — return period is derived from relative frequency of group events); MEAN LossMethod is excluded as a GroupMethod.",New in ORD v2,Yes
+Results,"GPLT,GALT,GEPT",csv,GroupEventSetId,,"Identifier of the GroupEventSet: the set of analyses with compatible event sets that were combined in the grouped analysis. Opaque string whose structure is platform-specific; compare it as a whole and never parse it.",New in ORD v2,Yes

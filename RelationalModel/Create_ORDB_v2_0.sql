@@ -91,7 +91,9 @@
            is the LossMethod's analytical mean and is excluded from GroupMethod).
            EP: EPCalc (INT) → EPMethodId (FK → EPMethod); EPType (INT) →
            EPTypeId (FK → EPType). EP_Samples: EPType (INT) → EPTypeId (FK →
-           EPType).
+           EPType). AAL: added LossMethodId (FK → LossMethod), included in the
+           primary key so an output set can hold AAL rows for more than one
+           LossMethod.
            Grouped tables use GroupMethod in place of LossMethod/EPMethod —
            GroupMethod replaces LossType on GAAL and GPLT, and replaces
            EPCalc+EPType on GEP (GEP's ReturnPeriod is now relative-frequency-
@@ -742,12 +744,15 @@ BEGIN
     CREATE TABLE dbo.AAL (
         output_set_id   INT   NOT NULL,
         SummaryId       INT   NOT NULL DEFAULT 0,
+        LossMethodId    INT   NOT NULL, -- v2.0: added — FK to LossMethod lookup
         SampleType      INT   NOT NULL DEFAULT 0,
         MeanLoss        FLOAT NULL,
         SDLoss          FLOAT NULL,
-        CONSTRAINT PK_AAL PRIMARY KEY CLUSTERED (output_set_id, SummaryId, SampleType),
+        CONSTRAINT PK_AAL PRIMARY KEY CLUSTERED (output_set_id, SummaryId, LossMethodId, SampleType),
         CONSTRAINT FK_AAL_OutputSet_output_set_id
-            FOREIGN KEY (output_set_id) REFERENCES dbo.OutputSet(id)
+            FOREIGN KEY (output_set_id) REFERENCES dbo.OutputSet(id),
+        CONSTRAINT FK_AAL_LossMethod_LossMethodId
+            FOREIGN KEY (LossMethodId) REFERENCES dbo.LossMethod(id)
     );
 
     CREATE NONCLUSTERED INDEX IX_AAL_SummaryId
@@ -1068,6 +1073,14 @@ GO
 -- ============================================================================
 -- 10. VIEWS — reconstruct human-readable lookup codes for consumers
 -- ============================================================================
+
+IF OBJECT_ID('dbo.vw_AAL', 'V') IS NOT NULL DROP VIEW dbo.vw_AAL;
+GO
+CREATE VIEW dbo.vw_AAL AS
+SELECT a.output_set_id, a.SummaryId, lm.Code AS LossMethod, a.SampleType, a.MeanLoss, a.SDLoss
+FROM dbo.AAL a
+JOIN dbo.LossMethod lm ON lm.id = a.LossMethodId;
+GO
 
 IF OBJECT_ID('dbo.vw_EP', 'V') IS NOT NULL DROP VIEW dbo.vw_EP;
 GO

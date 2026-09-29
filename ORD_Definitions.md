@@ -130,6 +130,10 @@ As for events, the same statistical variants are available for periods at each s
 
 Commonly known as the Average Annual Loss ‘AAL’, the Period Average Loss Table (PALT) is the high level statistical summary of the mean and standard deviation of loss over all periods.
 
+Each row carries a **LossMethod** code (`MEAN`, `STOC` or `CONV`) identifying
+how the loss was calculated, so one table can hold results from more than one
+LossMethod.
+
 &nbsp;
 
 ## Grouped Analysis (ORD v2)
@@ -140,6 +144,12 @@ Table) — for combining results from multiple compatible analyses. Grouped
 tables use **GroupMethod** in place of LossMethod/EPMethod; they don't carry an
 EPMethod because return periods in grouped tables are determined by the
 relative frequency of group events rather than EP curve construction.
+
+| Table | Fields |
+|-------|--------|
+| GPLT | `GroupEventSetId`, `SummaryId`, `Period`, `EventId`, `GroupMethod`, `Loss` |
+| GALT | `GroupEventSetId`, `SummaryId`, `GroupMethod`, `MeanLoss`, `SDLoss` |
+| GEPT | `GroupEventSetId`, `SummaryId`, `GroupMethod`, `ReturnPeriod`, `Loss` |
 
 **GroupMethod:**
 
