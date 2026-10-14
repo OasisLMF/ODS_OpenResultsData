@@ -1,0 +1,6 @@
+# Local Claude Code session notes/memory — never pushed to GitHub
+.claude/memory/
+
+# Editor/OS cruft
+.DS_Store
+Thumbs.db
