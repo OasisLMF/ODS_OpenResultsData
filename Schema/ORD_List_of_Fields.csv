@@ -5,30 +5,30 @@ Blue italic text,Not a field as such - rather a structure within a json file,,,,
 ,,,,,,,
 ,,,,,,,
 Category,Table/File,File Format,Proposed Field Name,Current Field Name,Field Name Description,Comment,Additional Field (compared to Oasis)
-Results,"ALT,EPT,PSEPT,MELT,MPLT,SELT,SPLT,QELT,QPLT,GPLT,GALT,GEPT",csv,SummaryId,summary_id,Summary ID,,
+Results,"ALT,EPT,PSEPT,MELT,MPLT,SELT,SPLT,QELT,QPLT,GPLT,GALT,GEPT,GELT",csv,SummaryId,summary_id,Summary ID,,
 Results,"ALT,MELT",csv,SampleType,type,Indicator whether mean loss is analytical (SampleType=1) or sampled (SampleType=2),changed from 'type' to be a little less generic,
-Results,"ALT,MELT,MPLT,GALT",csv,MeanLoss,mean,Mean loss,,
-Results,"ALT,MELT,MPLT,GALT",csv,SDLoss,standard_deviation,Standard Deviation,,
+Results,"ALT,MELT,MPLT,GALT,GELT",csv,MeanLoss,mean,Mean loss,,
+Results,"ALT,MELT,MPLT,GALT,GELT",csv,SDLoss,standard_deviation,Standard Deviation,,
 Results,ALT,csv,SourceExposure,exposure_value,Exposure Value,,
-Results,"MELT,MPLT",csv,FootprintExposure,,Exposure in the event footprint,,Yes
+Results,"MELT,MPLT,GELT",csv,FootprintExposure,,Exposure in the event footprint,,Yes
 Results,"SELT,SPLT",csv,ImpactedExposure,,Exposure impacted by the event (where loss > 0),,Yes
 Results,"PSEPT,SELT,SPLT",csv,SampleId,sidx,Sample number,For sample analyses only,
 Results,"EPT, PSEPT, GEPT",csv,ReturnPeriod,return_period,Return period,,
 Results,"EPT,PSEPT,SELT,SPLT,QELT,QPLT,GPLT,GEPT",csv,Loss,loss,Loss,,
 Results,MPLT,csv,SampleType,,Indicator whether mean loss is analytical (SampleType=1) or sampled (SampleType=2),changed from 'type' to be a little less generic,Yes
-Results,"MELT,MPLT,SELT,SPLT,QELT,QPLT,GPLT",csv,EventId,event_id,Event ID,,
+Results,"MELT,MPLT,SELT,SPLT,QELT,QPLT,GPLT,GELT",csv,EventId,event_id,Event ID,,
 Results,"MPLT,QPLT,SPLT,GPLT",csv,Period,period_no,Period No,,
 Results,"MPLT,QPLT,SPLT",csv,Year,occ_year,Occurrence Year,,
 Results,"MPLT,QPLT,SPLT",csv,Month,occ_month,Occurrence Month,,
 Results,"MPLT,QPLT,SPLT",csv,Day,occ_day,Occurrence Day,,
 Results,"MPLT,QPLT,SPLT",csv,Hour,,Occurrence Hour,,Yes
 Results,"MPLT,QPLT,SPLT",csv,Minute,,Occurrence Minute,,Yes
-Results,MELT,csv,EventRate,,Rate representing the summary of the occurrence table event frequency,Need to have some info that defines what it is in how to resample it. To make sure that model results are not misused. Need to say what version it is (could be different views). Could there be a different rate in the model category Events table (e.g. pre-boiling down or pre-simulation rate)?,Yes
+Results,"MELT,GELT",csv,EventRate,,Rate representing the summary of the occurrence table event frequency,Need to have some info that defines what it is in how to resample it. To make sure that model results are not misused. Need to say what version it is (could be different views). Could there be a different rate in the model category Events table (e.g. pre-boiling down or pre-simulation rate)?,Yes
 Model,ExtraModelMetaData,json,FrequencyDistribution,,Frequency,"added after discussion in the meeting; extra info for resampling, so that results are not misused. E.g. Negative Binomial, Poisson, Occurrence File",Yes
 Model,ExtraModelMetaData,json,LossUncertaintyDistribution,,Loss Uncertainty,"added after discussion in the meeting; extra info for resampling, so that results are not misused. E.g. Beta, Gamma, Sample table, Quantile table",Yes
 Model,ExtraModelMetaData,json,SeasonalityDistribution,,Seasonality,"added after discussion in the meeting; extra info for resampling, so that results are not misused. E.g. Uniform, Occurrence File",Yes
-Results,"MELT,MPLT",csv,SDLossCor,,Correlated Standard Deviation,,Yes
-Results,"MELT,MPLT",csv,SDLossInd,,Independent Standard Deviation,,Yes
+Results,"MELT,MPLT,GELT",csv,SDLossCor,,Correlated Standard Deviation,,Yes
+Results,"MELT,MPLT,GELT",csv,SDLossInd,,Independent Standard Deviation,,Yes
 Results,"QELT,QPLT",csv,Quantile,,Loss Quantile,,Yes
 Results,"SELT,SPLT",csv,ImpactedNumLocs,,Number of locations that have been affected by the event. ,TIVs are defined in various ways in 'ExposureDefinition' tab,Yes
 Results,"MELT,MPLT",csv,MeanImpactedNumLocs,,Mean number of locations that have been affected by the event (across all samples),,Yes
@@ -115,15 +115,15 @@ Results,ELOG,csv,LocNumber,,Location number,For exposure,Yes
 Results,ELOG,csv,Coverage,,Coverage,For exposure,Yes
 Results,ELOG,csv,PerilCode,,Peril code,For exposure,Yes
 Results,"ELOG,REJEXP",csv,ErrorMessage,,Error message,For exposure,Yes
-Results,"MELT, MPLT",csv,ChanceOfLoss,,Probability of non-zero loss,Could be defined analytically and from sample data.,Yes
-Results,"MELT, MPLT",csv,MaxLoss,,Highest point of event loss on probability distribution ,Not applicable for mean DR (SampleType = 1),Yes
-Results,"MELT,MPLT",csv,MeanImpactedExposure,,Mean exposure that has been affected by the event (across all samples),,Yes
-Results,"MELT,MPLT",csv,MaxImpacted Exposure,,Max exposure that has been affected by the event (across all samples). ,,Yes
+Results,"MELT, MPLT, GELT",csv,ChanceOfLoss,,Probability of non-zero loss,Could be defined analytically and from sample data.,Yes
+Results,"MELT, MPLT, GELT",csv,MaxLoss,,Highest point of event loss on probability distribution ,Not applicable for mean DR (SampleType = 1),Yes
+Results,"MELT,MPLT,GELT",csv,MeanImpactedExposure,,Mean exposure that has been affected by the event (across all samples),,Yes
+Results,"MELT,MPLT,GELT",csv,MaxImpacted Exposure,,Max exposure that has been affected by the event (across all samples). ,,Yes
 Results,"MELT,MPLT",csv,FootprintNumLocs,,Number of locations in the event footprint,,Yes
 Results,"EPT, PSEPT",csv,EPType,,"String code for type of EP curve (ORD v2): OEP, AEP, TVAR_OEP, TVAR_AEP.",Was integer 1=OEP/2=OEP TVAR/3=AEP/4=AEP TVAR in ORD v1; renamed to string code in ORD v2,
 Results,EPT,csv,EPMethod,EPCalc,"String code for EP calculation method (ORD v2): A_MEAN, S_FULL, S_PSMN, S_MEAN, C_MEAN. Prefix indicates LossMethod (A_=MEAN, S_=STOC, C_=CONV).",Was integer EPCalc (1=MeanDR/2=Full/3=PerSampleMean/4=MeanSample) in ORD v1; renamed EPMethod with string codes in ORD v2,
 Results,EPT,csv,SDLoss,,"Optional. Sample standard deviation of loss at this return period, around the sample mean EP curve (most relevant to EPMethod S_MEAN). Populated only where the producing platform calculates it; null otherwise.",New in ORD v2,Yes
 Results,EPT,csv,MaxLoss,,"Optional. Maximum loss at this return period, around the sample mean EP curve (most relevant to EPMethod S_MEAN). Populated only where the producing platform calculates it; null otherwise.",New in ORD v2,Yes
 Results,ALT,csv,LossMethod,LossType,"String code for loss calculation method: MEAN (analytical mean), STOC (stochastic sampling), CONV (numerical convolution).",Renamed from LossType in ORD v2; MEAN was ANLM in ORD v1,
-Results,"GPLT,GALT,GEPT",csv,GroupMethod,,"String code for grouped-analysis calculation method: MEAN, RSAM, RSSD. Used on grouped output tables in place of EPMethod (no EP variants needed — return period is derived from relative frequency of group events); MEAN LossMethod is excluded as a GroupMethod.",New in ORD v2,Yes
-Results,"GPLT,GALT,GEPT",csv,GroupEventSetId,,"Identifier of the GroupEventSet: the set of analyses with compatible event sets that were combined in the grouped analysis. Opaque string whose structure is platform-specific; compare it as a whole and never parse it.",New in ORD v2,Yes
+Results,"GPLT,GALT,GEPT,GELT",csv,GroupMethod,,"String code for grouped-analysis calculation method: MEAN, RSAM, RSSD. Used on grouped output tables in place of EPMethod (no EP variants needed — return period is derived from relative frequency of group events); MEAN LossMethod is excluded as a GroupMethod. GELT is valid for MEAN and RSSD only, not RSAM.",New in ORD v2,Yes
+Results,"GPLT,GALT,GEPT,GELT",csv,GroupEventSetId,,"Identifier of the GroupEventSet: the set of analyses with compatible event sets that were combined in the grouped analysis. Opaque string whose structure is platform-specific; compare it as a whole and never parse it.",New in ORD v2,Yes

@@ -48,7 +48,7 @@ The EPT in ORD is a set of user-specified percentiles of (typically) annual loss
 **LossMethod** (renamed from `LossType` in ORD v1) describes how a loss was
 calculated, independent of any specific output table:
 
-| Code | v1 code | Description |
+| Code | v1 code | ShortName |
 |------|---------|-------------|
 | `MEAN` | `ANLM` | Analytical mean |
 | `STOC` | `STOC` | Stochastic sampling |
@@ -172,11 +172,11 @@ under `RSAM` event standard deviations can't be summed across common event ids.
 
 **GroupMethod:**
 
-| Code | Int | ShortName | Description |
-|------|-----|-----------|-------------|
-| `MEAN` | 1 | Grouped Means | Group losses derive from summed/maximum event mean of underlying analyses. |
-| `RSAM` | 2 | Resampled secondary uncertainty | Group event losses from summed/maximum of resampled losses from underlying event severity distributions; inter-GroupEventSet correlation is zero or imposed by alpha factors. GELT is not produced for RSAM. |
-| `RSSD` | 3 | Resampled secondary uncertainty using sum of decomposed event standard deviations | Group event losses from resampled losses; group event standard deviations from summing of decomposed correlated and independent standard deviations capturing internally derived correlation by event; requires decomposed event standard deviations in input ELTs. |
+| Code | ShortName | Description |
+|------|-----------|-------------|
+| `MEAN` | Grouped Means | Group losses derive from summed/maximum event mean of underlying analyses. |
+| `RSAM` | Resampled secondary uncertainty | Group event losses from summed/maximum of resampled losses from underlying event severity distributions; inter-GroupEventSet correlation is zero or imposed by alpha factors. GELT is not produced for RSAM. |
+| `RSSD` | Resampled secondary uncertainty using sum of decomposed event standard deviations | Group event losses from resampled losses; group event standard deviations from summing of decomposed correlated and independent standard deviations capturing internally derived correlation by event; requires decomposed event standard deviations in input ELTs. |
 
 The analytical mean LossMethod (`MEAN`, formerly `ANLM`) is **not** a valid
 GroupMethod — it's not valid to group analytical mean analyses. All three

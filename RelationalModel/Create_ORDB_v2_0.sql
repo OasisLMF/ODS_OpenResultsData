@@ -81,15 +81,15 @@
            normalised into lookup tables per the pattern agreed with Jeremy
            Zechar — string `Code` appears in ORD output files as-is; the
            relational model stores an INT surrogate key for FK efficiency, with
-           a `LegacyCode`/`LegacyInt` column retained for v1 traceability where
-           the id doesn't already match the v1 value, and a `vw_*` view per
-           affected results table to reconstruct the string codes for consumers.
-           Lookup tables carry a short `ShortName` label; fuller descriptions
-           live in ORD_Definitions.md rather than the schema.
+           a `vw_*` view per affected results table to reconstruct the string
+           codes for consumers. LossMethod keeps a `LegacyCode` column for v1
+           traceability (ANLM → MEAN). All lookup tables carry a short
+           `ShortName` label; fuller descriptions live in ORD_Definitions.md
+           rather than the schema.
            Added lookup tables: LossMethod (STOC, CONV, MEAN — renamed from
            ANLM), EPMethod (A_MEAN, S_FULL, S_PSMN, S_MEAN, C_MEAN),
            EPType (OEP, TVAR_OEP, AEP, TVAR_AEP — replaces legacy 1-4 ints;
-           id equals the v1 int, so no LegacyInt column),
+           id equals the v1 int),
            GroupMethod (MEAN, RSAM, RSSD — new, for grouped analyses; MEAN here
            is the LossMethod's analytical mean and is excluded from GroupMethod).
            EP: EPCalc (INT) → EPMethodId (FK → EPMethod); EPType (INT) →
@@ -247,10 +247,10 @@ GO
 -- String `Code` is what appears in ORD output files. The relational model
 -- normalises to an INT surrogate key for FK efficiency in the results tables;
 -- `vw_*` views (section 10) join back to Code for consumers that want the
--- human-readable value. LegacyCode/LegacyInt is retained for v1 traceability
--- only and is not a live foreign key. EPType has no legacy column because its
--- id is the v1 integer. ShortName is a short label only; fuller descriptions
--- are documented in ORD_Definitions.md.
+-- human-readable value. LossMethod.LegacyCode is retained for v1 traceability
+-- only and is not a live foreign key. EPType's id is the v1 integer. ShortName
+-- is a short label only; fuller descriptions are documented in
+-- ORD_Definitions.md.
 -- ============================================================================
 
 IF OBJECT_ID('dbo.LossMethod', 'U') IS NULL
@@ -259,7 +259,7 @@ BEGIN
         id            INT IDENTITY(1,1) PRIMARY KEY,
         Code          NVARCHAR(10)  NOT NULL UNIQUE,
         LegacyCode    NVARCHAR(10)  NULL,
-        Description   NVARCHAR(500) NOT NULL
+        ShortName     NVARCHAR(100) NOT NULL
     );
 END
 GO
@@ -290,14 +290,13 @@ BEGIN
     CREATE TABLE dbo.GroupMethod (
         id            INT IDENTITY(1,1) PRIMARY KEY,
         Code          NVARCHAR(10)  NOT NULL UNIQUE,
-        LegacyInt     INT           NULL,
         ShortName     NVARCHAR(100) NOT NULL
     );
 END
 GO
 
 TRUNCATE TABLE dbo.LossMethod;
-INSERT INTO dbo.LossMethod (Code, LegacyCode, Description)
+INSERT INTO dbo.LossMethod (Code, LegacyCode, ShortName)
 VALUES
     ('MEAN', 'ANLM', 'Analytical mean'),
     ('STOC', NULL,   'Stochastic sampling'),
@@ -324,11 +323,11 @@ VALUES
 GO
 
 TRUNCATE TABLE dbo.GroupMethod;
-INSERT INTO dbo.GroupMethod (Code, LegacyInt, ShortName)
+INSERT INTO dbo.GroupMethod (Code, ShortName)
 VALUES
-    ('MEAN', 1, 'Grouped Means'),
-    ('RSAM', 2, 'Resampled secondary uncertainty'),
-    ('RSSD', 3, 'Resampled secondary uncertainty using sum of decomposed event standard deviations');
+    ('MEAN', 'Grouped Means'),
+    ('RSAM', 'Resampled secondary uncertainty'),
+    ('RSSD', 'Resampled secondary uncertainty using sum of decomposed event standard deviations');
 GO
 
 
