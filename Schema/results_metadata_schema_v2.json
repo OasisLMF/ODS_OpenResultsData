@@ -2,7 +2,7 @@
     "$schema": "http://oasislmf.org/results_metadata/draft/schema#",
     "type": "object",
     "title": "ORD results metadata",
-    "description": "Captures metadata about an ORD analysis result set, including analysis identification, model information, event set details, output summary levels, exposure summary, and grouping context. The schema is structured as a mandatory platform-neutral core with two optional extension blocks: platform_settings (generic, structured fields for cross-platform concepts such as PLA, disaggregation, and correlation modelling — any platform populates the fields it supports) and vendor_settings (free-form vendor/key/value triples for anything not otherwise captured). Schema v2 incorporates ORD working group feedback through September 2026 including GroupMethod codes, nullable event_set fields, platform-neutral perspective_code handling, and the platform_settings/vendor_settings rescoping (previously oasis_platform/vendor_extensions) to keep ORD decoupled from any single implementer.",
+    "description": "Captures metadata about an ORD analysis result set, including analysis identification, model information, event set details, output summary levels, exposure summary, and grouping context. The schema is structured as a mandatory platform-neutral core with two optional extension blocks: platform_settings (generic, structured fields for cross-platform concepts such as PLA, disaggregation, and correlation modelling — any platform populates the fields it supports) and vendor_settings (free-form vendor/key/value triples for anything not otherwise captured). Schema v2 incorporates ORD working group feedback through October 2026 including GroupMethod codes, the GroupSettings grouping fields, nullable event_set fields, platform-neutral perspective_code handling, and the platform_settings/vendor_settings rescoping (previously oasis_platform/vendor_extensions) to keep ORD decoupled from any single implementer.",
     "definitions": {
         "summary_set": {
             "type": "object",
@@ -242,7 +242,7 @@
             "items": {
                 "type": "string",
                 "title": "EPMethod code",
-                "description": "Short code identifying the EP calculation method. Known values: A_MEAN (analytical mean), S_FULL (stochastic full uncertainty), S_PSMN (stochastic per-sample mean), S_MEAN (stochastic mean), C_MEAN (convolution mean)."
+                "description": "Short code identifying the EP calculation method. Known values: A_MEAN (analytical mean), S_FULL (stochastic full uncertainty), S_PSMN (stochastic per-sample mean), S_MEAN (stochastic sample mean), C_MEAN (convolution mean)."
             }
         },
         "event_set": {
@@ -313,16 +313,16 @@
         "grouping": {
             "type": "object",
             "title": "Grouping settings",
-            "description": "Settings relating to ORD grouped analysis. Populated when this analysis is part of, or a candidate for, a grouped result. Grouped output tables (GPLT, GALT, GEPT) use a GroupMethod code rather than an EPMethod code; return periods in grouped tables are determined by relative frequency of group events rather than EP curve construction.",
+            "description": "Settings relating to ORD grouped analysis. Populated when this analysis is part of, or a candidate for, a grouped result. Corresponds to the GroupSettings table in ORDB. Grouped output tables (GPLT, GALT, GEPT, GELT) use a GroupMethod code rather than an EPMethod code; return periods in grouped tables are determined by relative frequency of group events rather than EP curve construction.",
             "properties": {
                 "group_methods": {
                     "type": "array",
                     "title": "Group methods",
-                    "description": "GroupMethod codes present in the grouped ORD output files (e.g. ['RSAM', 'RSSD']). Analogous to loss_methods and ep_methods for grouped results. GroupMethod describes how group event losses are derived from underlying per-model event losses. Note: the analytical mean (LossMethod MEAN, formerly ANLM) is explicitly excluded as a GroupMethod — all GroupMethods operate on stochastic (STOC) and/or convolution (CONV) loss inputs only. The GroupMethod–LossMethod relationship is non-exclusive: all three GroupMethods can combine STOC and CONV inputs; RSSD additionally requires decomposed event standard deviations.",
+                    "description": "GroupMethod codes present in the grouped ORD output files (e.g. ['RSAM', 'RSSD']). Analogous to loss_methods and ep_methods for grouped results. GroupMethod describes how group event losses are derived from underlying per-model event losses. Note: the analytical mean (LossMethod MEAN, formerly ANLM) is explicitly excluded as a GroupMethod — all GroupMethods operate on stochastic (STOC) and/or convolution (CONV) loss inputs only. The GroupMethod–LossMethod relationship is non-exclusive: all three GroupMethods can combine STOC and CONV inputs; RSSD additionally requires decomposed event standard deviations. In ORDB the same information is held as three booleans on GroupSettings (group_method_mean, group_method_rsam, group_method_rssd); the array and boolean forms are equivalent.",
                     "items": {
                         "type": "string",
                         "title": "GroupMethod code",
-                        "description": "Short code identifying the group loss calculation method. Known values: MEAN — Grouped Means (group losses derive from summed/maximum event mean of underlying analyses); RSAM — Resampled secondary uncertainty (group event losses from summed/maximum of resampled losses from underlying event severity distributions; inter-GroupEventSet correlation is zero or imposed by alpha factors); RSSD — Resampled secondary uncertainty using sum of decomposed event standard deviations (group event losses from resampled losses; group event standard deviations from summing of decomposed correlated and independent standard deviations capturing internally derived correlation by event; requires decomposed event standard deviations in input ELTs).",
+                        "description": "Short code identifying the group loss calculation method. Known values: MEAN (Grouped Means), RSAM (Resampled secondary uncertainty), RSSD (Resampled secondary uncertainty using sum of decomposed event standard deviations). Full descriptions are in ORD_Definitions.md.",
                         "examples": ["MEAN", "RSAM", "RSSD"]
                     }
                 },
@@ -331,16 +331,33 @@
                     "title": "Group event set ID",
                     "description": "Identifier for the event set group this analysis belongs to. Analyses sharing a group_event_set_id have compatible event sets and can be grouped. Determined by model_supplier_id and other configurable metadata fields. The internal structure of this identifier may vary between platforms — implementations should treat it as an opaque string for comparison purposes rather than assuming a specific format."
                 },
+                "group_event_set_fields": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "title": "Group event set fields",
+                    "description": "The event set fields used to generate the group_event_set_id (any subset of event_set_id, event_set_description, event_occurrence_id, event_occurrence_description, event_occurrence_max_periods). See ORD Combining Results §7.2."
+                },
                 "group_number_of_periods": {
                     "type": "integer",
                     "minimum": 1,
                     "title": "Group number of periods",
                     "description": "Number of periods used in the grouped analysis. Must be at least the largest number of periods across all event sets being grouped (see event_set.event_occurrence_max_periods)."
                 },
+                "group_period_seed": {
+                    "type": "integer",
+                    "title": "Group period seed",
+                    "description": "Random seed used when sampling periods in the grouped analysis."
+                },
+                "group_parametric_distribution": {
+                    "type": "string",
+                    "title": "Group parametric distribution",
+                    "description": "Parametric distribution used to resample event losses for the RSAM and RSSD GroupMethods.",
+                    "enum": ["beta", "gamma"]
+                },
                 "group_elt_format_selection": {
                     "type": "string",
                     "title": "Group ELT format selection",
-                    "description": "Which ELT format is used for loss severity sampling in the grouped analysis.",
+                    "description": "Which ELT format is used for loss severity sampling in the grouped analysis. Also referred to as group_format_priority.",
                     "enum": ["moment", "quantile", "sample"]
                 },
                 "group_fill_perspectives": {
@@ -349,6 +366,10 @@
                     "description": "Whether missing perspectives are filled from available ones during grouping (e.g. net produced from gross).",
                     "default": false
                 },
+                "group_aal": { "type": "boolean", "title": "Group AAL", "description": "Informational only: grouped AAL output (GALT) was requested. The grouped output files are the source of truth for which outputs exist; don't rely on this flag to detect them.", "default": false },
+                "group_ep":  { "type": "boolean", "title": "Group EP",  "description": "Informational only: grouped EP output (GEPT) was requested. The grouped output files are the source of truth for which outputs exist; don't rely on this flag to detect them.", "default": false },
+                "group_plt": { "type": "boolean", "title": "Group PLT", "description": "Informational only: grouped PLT output (GPLT) was requested. The grouped output files are the source of truth for which outputs exist; don't rely on this flag to detect them.", "default": false },
+                "group_elt": { "type": "boolean", "title": "Group ELT", "description": "Informational only: grouped ELT output (GELT) was requested. Not valid with GroupMethod RSAM. The grouped output files are the source of truth for which outputs exist; don't rely on this flag to detect them.", "default": false },
                 "was_filled": {
                     "type": "boolean",
                     "title": "Was filled",

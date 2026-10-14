@@ -8,14 +8,15 @@
 > (such as supporting both ORD v1 and v2 output file formats in parallel until
 > January 2028), that is out of scope for the ORD definitions themselves.
 
-> **ORD v2 open questions** (raised in the ORD working group, not yet resolved —
-> flagged here rather than implemented in the relational model):
-> 1. `group_number_of_periods` placement (Joh Carter): should this live in a
->    dedicated "grouping params" table rather than a metadata/settings table?
->    If so, what is its PK/FK structure?
-> 2. Should `SummaryInfo`/`GroupSummaryInfo` gain explicit boolean output-type
->    flag columns (`qelt`, `qplt`, and the rest of `ord_output`), mirroring the
->    results metadata schema, or should that stay file/JSON-only?
+> **ORD v2 open question** (raised in the ORD working group, not yet resolved —
+> flagged here rather than implemented in the relational model): should
+> `SummaryInfo`/`GroupSummaryInfo` gain explicit boolean output-type flag
+> columns (`qelt`, `qplt`, and the rest of `ord_output`), mirroring the results
+> metadata schema, or should that stay file/JSON-only?
+>
+> **Resolved:** `group_number_of_periods` (raised by Joh Carter) lives on the
+> `GroupSettings` table, one row per results group — see
+> [Grouped Analysis](#grouped-analysis-ord-v2) below.
 >
 > **Resolved:** a v1/v2 backward-compatibility mechanism was previously raised
 > as a third open question. Per the design principle above, this doesn't apply
@@ -53,29 +54,31 @@ calculated, independent of any specific output table:
 | `STOC` | `STOC` | Stochastic sampling |
 | `CONV` | `CONV` | Numerical convolution |
 
-**EPMethod** (replaces the integer `EPCalc`):
+**EPMethod** (replaces the integer `EPCalc`). `ShortName` is the label held in
+the ORDB lookup table; the description is documented here only:
 
-| Code | v1 int (`EPCalc`) | Description |
-|------|-------------------|-------------|
-| `A_MEAN` | 1 (Mean Damage Ratio) | Analytical mean EP — the loss calculation for a year using the event mean damage loss computed by numerical integration of the effective damageability distributions. |
-| `S_FULL` | 2 (Full Uncertainty) | Stochastic full uncertainty — the calculation across all samples (treating the samples effectively as repeat years) — this is the most accurate of all the single EP Curves. |
-| `S_PSMN` | 3 (Per Sample Mean) | Stochastic per-sample mean — the average of the losses at each return period of the Per Sample EPT (see PSEPT below). |
-| `S_MEAN` | 4 (Sample Mean) | Stochastic mean — the loss calculation for a year using the statistical sample event mean. |
-| `C_MEAN` | (new) | Convolution mean. |
+| Code | v1 int (`EPCalc`) | ShortName | Description |
+|------|-------------------|-----------|-------------|
+| `A_MEAN` | 1 (Mean Damage Ratio) | Analytical mean | The loss calculation for a year using the event mean damage loss computed by numerical integration of the effective damageability distributions. |
+| `S_FULL` | 2 (Full Uncertainty) | Stochastic full uncertainty | The calculation across all samples (treating the samples effectively as repeat years) — this is the most accurate of all the single EP Curves. |
+| `S_PSMN` | 3 (Per Sample Mean) | Stochastic per-sample mean | The average of the losses at each return period of the Per Sample EPT (see PSEPT below). |
+| `S_MEAN` | 4 (Sample Mean) | Stochastic sample mean | The loss calculation for a year using the statistical sample event mean. |
+| `C_MEAN` | (new) | Convolution mean | Mean EP curve from losses computed by numerical convolution (LossMethod `CONV`). |
 
 The code prefix indicates the associated LossMethod: `A_` → `MEAN` (analytical),
 `S_` → `STOC` (stochastic), `C_` → `CONV` (convolution).
 
 &nbsp;
 
-**EPType** (replaces the integer `EPType`):
+**EPType** (replaces the integer `EPType`). The v1 integer is also the ORDB
+lookup id:
 
-| Code | v1 int | Description |
-|------|--------|-------------|
-| `OEP` | 1 | Occurrence Exceedance Probability — maximum of any one event's losses in a year. |
-| `AEP` | 2 (was AEP) / 3 | Aggregate Exceedance Probability — sum of losses from all events in a year. |
-| `TVAR_OEP` | (was OEP TVaR) | Tail Value at Risk / TCE (Tail Conditional Expectation) — computed by averaging the rank ordered losses exceeding a given return period loss from the respective OEP result. |
-| `TVAR_AEP` | (was AEP TVaR) | Tail Value at Risk / TCE — computed by averaging the rank ordered losses exceeding a given return period loss from the respective AEP result. |
+| Code | v1 int | ShortName | Description |
+|------|--------|-----------|-------------|
+| `OEP` | 1 | Occurrence Exceedance Probability | Maximum of any one event's losses in a year. |
+| `TVAR_OEP` | 2 | Tail Value at Risk — OEP | Tail Value at Risk / TCE (Tail Conditional Expectation) — computed by averaging the rank ordered losses exceeding a given return period loss from the respective OEP result. |
+| `AEP` | 3 | Aggregate Exceedance Probability | Sum of losses from all events in a year. |
+| `TVAR_AEP` | 4 | Tail Value at Risk — AEP | Tail Value at Risk / TCE — computed by averaging the rank ordered losses exceeding a given return period loss from the respective AEP result. |
 
 **ReturnPeriod:** Represents the reciprocal of the percentile
 
@@ -150,25 +153,30 @@ LossMethod.
 ## Grouped Analysis (ORD v2)
 
 ORD v2 introduces grouped output tables — **GPLT** (Group Period Loss Table),
-**GALT** (Group Annual Loss Table), and **GEPT** (Group Exceedance Probability
-Table) — for combining results from multiple compatible analyses. Grouped
-tables use **GroupMethod** in place of LossMethod/EPMethod; they don't carry an
-EPMethod because return periods in grouped tables are determined by the
-relative frequency of group events rather than EP curve construction.
+**GALT** (Group Annual Loss Table), **GEPT** (Group Exceedance Probability
+Table) and **GELT** (Group Event Loss Table) — for combining results from
+multiple compatible analyses. Grouped tables use **GroupMethod** in place of
+LossMethod/EPMethod; they don't carry an EPMethod because return periods in
+grouped tables are determined by the relative frequency of group events rather
+than EP curve construction.
 
 | Table | Fields |
 |-------|--------|
 | GPLT | `GroupEventSetId`, `SummaryId`, `Period`, `EventId`, `GroupMethod`, `Loss` |
 | GALT | `GroupEventSetId`, `SummaryId`, `GroupMethod`, `MeanLoss`, `SDLoss` |
 | GEPT | `GroupEventSetId`, `SummaryId`, `GroupMethod`, `ReturnPeriod`, `Loss` |
+| GELT | `GroupEventSetId`, `SummaryId`, `EventId`, `GroupMethod`, `EventRate`, `ChanceOfLoss`, `MeanLoss`, `SDLoss`, `MaxLoss`, `FootprintExposure`, `MeanImpactedExposure`, `MaxImpactedExposure`, `SDLossCor`, `SDLossInd` |
+
+GELT is valid for GroupMethod `MEAN` and `RSSD` but **not** `RSAM`, because
+under `RSAM` event standard deviations can't be summed across common event ids.
 
 **GroupMethod:**
 
-| Code | Int | Description |
-|------|-----|-------------|
-| `MEAN` | 1 | Grouped Means — group losses derive from summed/maximum event mean of underlying analyses. |
-| `RSAM` | 2 | Resampled secondary uncertainty — group event losses from summed/maximum of resampled losses from underlying event severity distributions; inter-GroupEventSet correlation is zero or imposed by alpha factors. |
-| `RSSD` | 3 | Resampled secondary uncertainty using sum of decomposed event standard deviations — group event losses from resampled losses; group event standard deviations from summing of decomposed correlated and independent standard deviations capturing internally derived correlation by event; requires decomposed event standard deviations in input ELTs. |
+| Code | Int | ShortName | Description |
+|------|-----|-----------|-------------|
+| `MEAN` | 1 | Grouped Means | Group losses derive from summed/maximum event mean of underlying analyses. |
+| `RSAM` | 2 | Resampled secondary uncertainty | Group event losses from summed/maximum of resampled losses from underlying event severity distributions; inter-GroupEventSet correlation is zero or imposed by alpha factors. GELT is not produced for RSAM. |
+| `RSSD` | 3 | Resampled secondary uncertainty using sum of decomposed event standard deviations | Group event losses from resampled losses; group event standard deviations from summing of decomposed correlated and independent standard deviations capturing internally derived correlation by event; requires decomposed event standard deviations in input ELTs. |
 
 The analytical mean LossMethod (`MEAN`, formerly `ANLM`) is **not** a valid
 GroupMethod — it's not valid to group analytical mean analyses. All three
@@ -194,3 +202,23 @@ generate this id" rather than "unknown":
 
 In the relational model these fields live on `EventOccurrenceSet`, and
 `GroupEventSet` references it via `event_occurrence_set_id`.
+
+**GroupSettings:** the settings for a grouped analysis, one record per results
+group. In the relational model this is the `GroupSettings` table (FK
+`group_id` → `ResultsGroup`); in the results metadata it's the `grouping`
+block.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `group_event_set_fields` | field list | The event set fields used to generate the `GroupEventSetId`. |
+| `group_number_of_periods` | integer | Number of periods in the grouped analysis; at least the largest `EventOccurrenceMaxPeriods` of the event sets being grouped. |
+| `group_period_seed` | integer | Random seed used when sampling periods. |
+| `group_method_mean` / `group_method_rsam` / `group_method_rssd` | boolean | Which GroupMethods are calculated. One record can request more than one. The results metadata holds the same information as a `group_methods` array of codes; the two forms are equivalent. |
+| `group_parametric_distribution` | `beta` / `gamma` | Parametric distribution used to resample event losses for `RSAM` and `RSSD`. |
+| `group_elt_format_selection` | `moment` / `quantile` / `sample` | Which ELT format is used for loss severity sampling. Also referred to as `group_format_priority`. |
+| `group_fill_perspectives` | boolean | Whether a missing perspective is filled from an available one (e.g. net from gross). |
+| `group_aal` / `group_ep` / `group_plt` / `group_elt` | boolean | Which grouped outputs (GALT / GEPT / GPLT / GELT) were requested. |
+
+The `group_aal`, `group_ep`, `group_plt` and `group_elt` flags are
+informational only. The grouped results tables are the source of truth for
+which outputs exist; don't rely on the flags to detect them.

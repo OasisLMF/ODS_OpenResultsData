@@ -22,16 +22,16 @@
   implementation choice, not an ORD requirement, and other ORD v2 implementers
   are not expected to maintain a v1 equivalent.
 
-  OPEN QUESTIONS (raised in the ORD working group, not yet resolved — flagged
-  here rather than implemented; do not treat either of the below as decided):
-    1. group_number_of_periods placement (Joh Carter): should this live in a
-       dedicated "grouping params" table rather than a metadata/settings table?
-       If so, what is its PK/FK structure? Not added to this schema pending
-       resolution.
-    2. Should SummaryInfo / GroupSummaryInfo gain explicit boolean output-type
-       flag columns (qelt, qplt, and the rest of ord_output from the v2 results
-       metadata schema), mirroring the JSON schema, or should that stay
-       file/JSON-only? Not added to this schema pending resolution.
+  OPEN QUESTION (raised in the ORD working group, not yet resolved — flagged
+  here rather than implemented; do not treat it as decided):
+    Should SummaryInfo / GroupSummaryInfo gain explicit boolean output-type
+    flag columns (qelt, qplt, and the rest of ord_output from the v2 results
+    metadata schema), mirroring the JSON schema, or should that stay
+    file/JSON-only? Not added to this schema pending resolution.
+
+  RESOLVED: group_number_of_periods placement (Joh Carter) — it lives on the
+  new GroupSettings table (one row per ResultsGroup, FK group_id), alongside
+  the rest of the grouped-analysis settings.
 
   RESOLVED: a v1/v2 backward-compatibility mechanism (version flag, separate
   table sets, or a conversion view) was raised as an open question in an
@@ -81,12 +81,15 @@
            normalised into lookup tables per the pattern agreed with Jeremy
            Zechar — string `Code` appears in ORD output files as-is; the
            relational model stores an INT surrogate key for FK efficiency, with
-           a `LegacyCode`/`LegacyInt` column retained for v1 traceability, and a
-           `vw_*` view per affected results table to reconstruct the string
-           codes for consumers.
+           a `LegacyCode`/`LegacyInt` column retained for v1 traceability where
+           the id doesn't already match the v1 value, and a `vw_*` view per
+           affected results table to reconstruct the string codes for consumers.
+           Lookup tables carry a short `ShortName` label; fuller descriptions
+           live in ORD_Definitions.md rather than the schema.
            Added lookup tables: LossMethod (STOC, CONV, MEAN — renamed from
            ANLM), EPMethod (A_MEAN, S_FULL, S_PSMN, S_MEAN, C_MEAN),
-           EPType (OEP, AEP, TVAR_OEP, TVAR_AEP — replaces legacy 1-4 ints),
+           EPType (OEP, TVAR_OEP, AEP, TVAR_AEP — replaces legacy 1-4 ints;
+           id equals the v1 int, so no LegacyInt column),
            GroupMethod (MEAN, RSAM, RSSD — new, for grouped analyses; MEAN here
            is the LossMethod's analytical mean and is excluded from GroupMethod).
            EP: EPCalc (INT) → EPMethodId (FK → EPMethod); EPType (INT) →
@@ -102,6 +105,13 @@
            derived, not EP-curve-constructed, since grouped analyses don't
            construct EP curves). Added group_event_set_id (FK → GroupEventSet)
            to GAAL and GEP, which were missing it (GPLT already had it).
+           GELT: SampleType (INT) → GroupMethodId (FK → GroupMethod), and
+           added group_event_set_id (FK → GroupEventSet), aligning it with
+           GAAL, GEP and GPLT. GELT is not valid for GroupMethod RSAM.
+           Added GroupSettings (one row per ResultsGroup) holding the
+           grouped-analysis settings, including group_number_of_periods; the
+           requested GroupMethods are three booleans (group_method_mean,
+           group_method_rsam, group_method_rssd).
            EventOccurrenceSet: event_set_id, event_set_description,
            event_occurrence_id, event_occurrence_description, and
            event_occurrence_max_periods changed from `NULL DEFAULT '' / 0` to
@@ -238,7 +248,9 @@ GO
 -- normalises to an INT surrogate key for FK efficiency in the results tables;
 -- `vw_*` views (section 10) join back to Code for consumers that want the
 -- human-readable value. LegacyCode/LegacyInt is retained for v1 traceability
--- only and is not a live foreign key.
+-- only and is not a live foreign key. EPType has no legacy column because its
+-- id is the v1 integer. ShortName is a short label only; fuller descriptions
+-- are documented in ORD_Definitions.md.
 -- ============================================================================
 
 IF OBJECT_ID('dbo.LossMethod', 'U') IS NULL
@@ -258,7 +270,7 @@ BEGIN
         id            INT IDENTITY(1,1) PRIMARY KEY,
         Code          NVARCHAR(10)  NOT NULL UNIQUE,
         LossMethodCode NVARCHAR(10) NULL, -- LossMethod indicated by the code prefix (A_/S_/C_); not a live FK
-        Description   NVARCHAR(500) NOT NULL
+        ShortName     NVARCHAR(100) NOT NULL
     );
 END
 GO
@@ -266,10 +278,9 @@ GO
 IF OBJECT_ID('dbo.EPType', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.EPType (
-        id            INT IDENTITY(1,1) PRIMARY KEY,
+        id            INT           PRIMARY KEY, -- not IDENTITY: id is the v1 EPType integer
         Code          NVARCHAR(10)  NOT NULL UNIQUE,
-        LegacyInt     INT           NULL,
-        Description   NVARCHAR(500) NOT NULL
+        ShortName     NVARCHAR(100) NOT NULL
     );
 END
 GO
@@ -280,7 +291,7 @@ BEGIN
         id            INT IDENTITY(1,1) PRIMARY KEY,
         Code          NVARCHAR(10)  NOT NULL UNIQUE,
         LegacyInt     INT           NULL,
-        Description   NVARCHAR(500) NOT NULL
+        ShortName     NVARCHAR(100) NOT NULL
     );
 END
 GO
@@ -294,30 +305,30 @@ VALUES
 GO
 
 TRUNCATE TABLE dbo.EPMethod;
-INSERT INTO dbo.EPMethod (Code, LossMethodCode, Description)
+INSERT INTO dbo.EPMethod (Code, LossMethodCode, ShortName)
 VALUES
-    ('A_MEAN', 'MEAN', 'Analytical mean EP'),
+    ('A_MEAN', 'MEAN', 'Analytical mean'),
     ('S_FULL', 'STOC', 'Stochastic full uncertainty'),
     ('S_PSMN', 'STOC', 'Stochastic per-sample mean'),
-    ('S_MEAN', 'STOC', 'Stochastic mean'),
+    ('S_MEAN', 'STOC', 'Stochastic sample mean'),
     ('C_MEAN', 'CONV', 'Convolution mean');
 GO
 
 TRUNCATE TABLE dbo.EPType;
-INSERT INTO dbo.EPType (Code, LegacyInt, Description)
+INSERT INTO dbo.EPType (id, Code, ShortName)
 VALUES
-    ('OEP',      1, 'Occurrence Exceedance Probability'),
-    ('AEP',      2, 'Aggregate Exceedance Probability'),
-    ('TVAR_OEP', NULL, 'Tail Value at Risk — OEP'),
-    ('TVAR_AEP', NULL, 'Tail Value at Risk — AEP');
+    (1, 'OEP',      'Occurrence Exceedance Probability'),
+    (2, 'TVAR_OEP', 'Tail Value at Risk — OEP'),
+    (3, 'AEP',      'Aggregate Exceedance Probability'),
+    (4, 'TVAR_AEP', 'Tail Value at Risk — AEP');
 GO
 
 TRUNCATE TABLE dbo.GroupMethod;
-INSERT INTO dbo.GroupMethod (Code, LegacyInt, Description)
+INSERT INTO dbo.GroupMethod (Code, LegacyInt, ShortName)
 VALUES
-    ('MEAN', 1, 'Grouped Means — group losses derive from summed/maximum event mean of underlying analyses'),
-    ('RSAM', 2, 'Resampled secondary uncertainty — group event losses from summed/maximum of resampled losses from underlying event severity distributions; inter-GroupEventSet correlation is zero or imposed by alpha factors'),
-    ('RSSD', 3, 'Resampled secondary uncertainty using sum of decomposed event standard deviations — group event losses from resampled losses; group event standard deviations from summing of decomposed correlated and independent standard deviations capturing internally derived correlation by event; requires decomposed event standard deviations in input ELTs');
+    ('MEAN', 1, 'Grouped Means'),
+    ('RSAM', 2, 'Resampled secondary uncertainty'),
+    ('RSSD', 3, 'Resampled secondary uncertainty using sum of decomposed event standard deviations');
 GO
 
 
@@ -600,6 +611,37 @@ BEGIN
         exposure_summary_level_fields   NVARCHAR(255)  NULL DEFAULT '',
         group_set_description           NVARCHAR(255)  NULL DEFAULT '',
         CONSTRAINT FK_GroupSet_ResultsGroup_group_id
+            FOREIGN KEY (group_id) REFERENCES dbo.ResultsGroup(id)
+    );
+END
+GO
+
+-- GroupSettings — v2.0: grouped-analysis settings, one row per ResultsGroup
+-- (mirrors Settings → Analysis). Mirrors the `grouping` block of the results
+-- metadata schema, where the requested GroupMethods are a `group_methods`
+-- array; here they are the three group_method_* booleans. The two forms are
+-- equivalent. The group_aal/group_ep/group_plt/group_elt output-type flags
+-- are informational only — the grouped results tables are the source of
+-- truth for which outputs exist.
+IF OBJECT_ID('dbo.GroupSettings', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.GroupSettings (
+        id                              INT IDENTITY(1,1) PRIMARY KEY,
+        group_id                        INT            NOT NULL UNIQUE,
+        group_event_set_fields          NVARCHAR(255)  NULL DEFAULT '', -- fields used to generate the GroupEventSetId
+        group_number_of_periods         INT            NULL,
+        group_period_seed               INT            NULL,
+        group_method_mean               BIT            NULL DEFAULT 0,
+        group_method_rsam               BIT            NULL DEFAULT 0,
+        group_method_rssd               BIT            NULL DEFAULT 0,
+        group_parametric_distribution   NVARCHAR(10)   NULL, -- 'beta' or 'gamma'; resampling distribution for RSAM/RSSD
+        group_elt_format_selection      NVARCHAR(10)   NULL, -- 'moment', 'quantile' or 'sample'
+        group_fill_perspectives         BIT            NULL DEFAULT 0,
+        group_aal                       BIT            NULL DEFAULT 0, -- informational
+        group_ep                        BIT            NULL DEFAULT 0, -- informational
+        group_plt                       BIT            NULL DEFAULT 0, -- informational
+        group_elt                       BIT            NULL DEFAULT 0, -- informational
+        CONSTRAINT FK_GroupSettings_ResultsGroup_group_id
             FOREIGN KEY (group_id) REFERENCES dbo.ResultsGroup(id)
     );
 END
@@ -1002,13 +1044,16 @@ END
 GO
 
 -- GELT — Group Event Loss Table
+-- v2.0: valid for GroupMethod MEAN and RSSD only, not RSAM — event standard
+-- deviations can't be summed across common event ids under RSAM.
 IF OBJECT_ID('dbo.GELT', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.GELT (
         group_set_id           INT   NOT NULL,
+        group_event_set_id     INT   NOT NULL, -- v2.0: added, aligns with GAAL/GEP/GPLT
         SummaryId              INT   NOT NULL DEFAULT 0,
         EventId                INT   NOT NULL DEFAULT 0,
-        SampleType             INT   NOT NULL DEFAULT 0,
+        GroupMethodId          INT   NOT NULL, -- v2.0: replaces SampleType (INT code) — FK to GroupMethod lookup; MEAN or RSSD only
         EventRate              FLOAT NULL,
         ChanceOfLoss           FLOAT NULL,
         MeanLoss               FLOAT NULL,
@@ -1019,9 +1064,13 @@ BEGIN
         MaxImpactedExposure    FLOAT NULL,
         SDLossCor              FLOAT NULL,
         SDLossInd              FLOAT NULL,
-        CONSTRAINT PK_GELT PRIMARY KEY CLUSTERED (group_set_id, EventId, SummaryId, SampleType),
+        CONSTRAINT PK_GELT PRIMARY KEY CLUSTERED (group_set_id, group_event_set_id, EventId, SummaryId, GroupMethodId),
         CONSTRAINT FK_GELT_GroupSet_group_set_id
-            FOREIGN KEY (group_set_id) REFERENCES dbo.GroupSet(id)
+            FOREIGN KEY (group_set_id) REFERENCES dbo.GroupSet(id),
+        CONSTRAINT FK_GELT_GroupEventSet_group_event_set_id
+            FOREIGN KEY (group_event_set_id) REFERENCES dbo.GroupEventSet(id),
+        CONSTRAINT FK_GELT_GroupMethod_GroupMethodId
+            FOREIGN KEY (GroupMethodId) REFERENCES dbo.GroupMethod(id)
     );
 
     CREATE NONCLUSTERED INDEX IX_GELT_EventId_SummaryId
@@ -1116,6 +1165,16 @@ GO
 CREATE VIEW dbo.vw_GEP AS
 SELECT e.group_set_id, e.group_event_set_id, e.SummaryId, gm.Code AS GroupMethod, e.ReturnPeriod, e.Loss
 FROM dbo.GEP e
+JOIN dbo.GroupMethod gm ON gm.id = e.GroupMethodId;
+GO
+
+IF OBJECT_ID('dbo.vw_GELT', 'V') IS NOT NULL DROP VIEW dbo.vw_GELT;
+GO
+CREATE VIEW dbo.vw_GELT AS
+SELECT e.group_set_id, e.group_event_set_id, e.SummaryId, e.EventId, gm.Code AS GroupMethod,
+       e.EventRate, e.ChanceOfLoss, e.MeanLoss, e.SDLoss, e.MaxLoss, e.FootprintExposure,
+       e.MeanImpactedExposure, e.MaxImpactedExposure, e.SDLossCor, e.SDLossInd
+FROM dbo.GELT e
 JOIN dbo.GroupMethod gm ON gm.id = e.GroupMethodId;
 GO
 

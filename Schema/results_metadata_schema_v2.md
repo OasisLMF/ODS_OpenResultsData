@@ -21,9 +21,9 @@ plus two optional extension blocks:
 - **`vendor_settings`** — a free-form list of vendor/key/value triples for
   anything not otherwise captured
 
-> Schema v2 incorporates ORD working-group feedback through September 2026:
-> GroupMethod codes, nullable `event_set` fields, platform-neutral
-> `perspective_code` handling, and renaming/rescoping `oasis_platform` /
+> Schema v2 incorporates ORD working-group feedback through October 2026:
+> GroupMethod codes, the GroupSettings grouping fields, nullable `event_set`
+> fields, platform-neutral `perspective_code` handling, and renaming/rescoping `oasis_platform` /
 > `vendor_extensions` to `platform_settings` / `vendor_settings` so the
 > schema stays decoupled from any single implementer — see the design
 > principle callout under [Platform settings](#platform-settings) below.
@@ -174,15 +174,20 @@ default to `0`.
 
 The `grouping` block is populated when an analysis is part of, or a candidate
 for, a **grouped** result — i.e. its results are (or could be) combined with
-other compatible analyses into a GPLT/GALT/GEPT grouped output.
+other compatible analyses into a GPLT/GALT/GEPT/GELT grouped output. It
+corresponds to the `GroupSettings` table in ORDB.
 
 | Field | Type | Description |
 |---|---|---|
-| `group_methods` | array of string | Which [GroupMethod codes](#groupmethod-codes) appear in the grouped output files, e.g. `["RSAM", "RSSD"]`. |
+| `group_methods` | array of string | Which [GroupMethod codes](#groupmethod-codes) appear in the grouped output files, e.g. `["RSAM", "RSSD"]`. In ORDB this is three booleans on `GroupSettings` (`group_method_mean`, `group_method_rsam`, `group_method_rssd`); the two forms are equivalent. |
 | `group_event_set_id` | string | Opaque identifier shared by analyses with compatible event sets. **Treat as an opaque string** — never parse or assume a structure, it varies by platform. |
+| `group_event_set_fields` | array of string | The [event set](#event-set) fields used to generate `group_event_set_id` — any subset of them. |
 | `group_number_of_periods` | integer (≥1) | Number of periods used in the grouped analysis. Must be at least the largest `event_set.event_occurrence_max_periods` across every event set being grouped. |
-| `group_elt_format_selection` | string, one of `moment` / `quantile` / `sample` | Which ELT format is used for loss severity sampling in the grouped analysis. |
+| `group_period_seed` | integer | Random seed used when sampling periods in the grouped analysis. |
+| `group_parametric_distribution` | string, one of `beta` / `gamma` | Parametric distribution used to resample event losses for the `RSAM` and `RSSD` GroupMethods. |
+| `group_elt_format_selection` | string, one of `moment` / `quantile` / `sample` | Which ELT format is used for loss severity sampling in the grouped analysis. Also referred to as `group_format_priority`. |
 | `group_fill_perspectives` | boolean (default `false`) | Whether a missing perspective is filled from an available one during grouping (e.g. deriving net from gross). |
+| `group_aal` / `group_ep` / `group_plt` / `group_elt` | boolean (default `false`) | Which grouped outputs (GALT / GEPT / GPLT / GELT) were requested. **Informational only** — the grouped output files are the source of truth for which outputs exist, so don't use these flags to detect them. |
 | `was_filled` | boolean (default `false`) | Whether *this output set's* perspective was itself filled from another during grouping — lets a consumer detect a fill without having to infer it from the perspective code. |
 | `source_perspective` | string | If `was_filled` is true, which perspective it was filled from. |
 | `global_alpha` | number, 0–1 | Gaussian copula correlation parameter applied across every model in the group. Overridden per-model or per-summary below. |
@@ -297,10 +302,10 @@ stochastic (`STOC`), `C_` = convolution (`CONV`).
 
 | Code | Meaning |
 |---|---|
-| `A_MEAN` | Analytical mean EP |
+| `A_MEAN` | Analytical mean |
 | `S_FULL` | Stochastic full uncertainty |
 | `S_PSMN` | Stochastic per-sample mean |
-| `S_MEAN` | Stochastic mean |
+| `S_MEAN` | Stochastic sample mean |
 | `C_MEAN` | Convolution mean |
 
 ### GroupMethod codes
@@ -315,6 +320,9 @@ and/or `CONV` loss inputs.
 | `MEAN` | Grouped Means — group losses derive from the summed/maximum event mean of the underlying analyses. |
 | `RSAM` | Resampled secondary uncertainty — group event losses from the summed/maximum of resampled losses from the underlying event severity distributions; inter-GroupEventSet correlation is zero, or imposed by alpha factors. |
 | `RSSD` | Resampled secondary uncertainty using summed decomposed event standard deviations — group event losses from resampled losses; group event standard deviations from summing decomposed correlated and independent standard deviations that capture internally-derived correlation by event. **Requires decomposed event standard deviations in the input ELTs.** |
+
+GELT is valid for `MEAN` and `RSSD` but **not** `RSAM`: under `RSAM`, event
+standard deviations can't be summed across common event ids.
 
 ### `perspective_code` well-known values
 

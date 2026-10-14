@@ -68,13 +68,14 @@ const T=[
   {id:'GroupOutputSet',c:'group',x:RX+20+S*2,y:150,f:[{n:'group_set_id',t:'FK'},{n:'output_set_id',t:'FK'}]},
   {id:'GroupEventSetAnalysis',c:'group',x:RX+20,y:258,f:[{n:'grp_evt_set_id',t:'FK'},{n:'analysis_id',t:'FK'}]},
   {id:'EventOccurrence',c:'group',x:RX+20+S,y:258,f:[{n:'evt_occ_set_id',t:'FK'}]},
+  {id:'GroupSettings',c:'group',x:RX+20+S*2,y:258,f:[{n:'id',t:'PK'},{n:'group_id',t:'FK'}]},
 
   {id:'GroupSet',c:'bridge',x:1160,y:370,f:[{n:'id',t:'PK'},{n:'group_id',t:'FK'}]},
   {id:'GroupSummaryInfo',c:'bridge',x:1350,y:370,f:[{n:'id',t:'PK'},{n:'group_set_id',t:'FK'}]},
 
   {id:'GAAL',c:'gresults',x:1140,y:506,f:[{n:'group_set_id',t:'FK'}]},
   {id:'GEP',c:'gresults',x:1330,y:506,f:[{n:'group_set_id',t:'FK'}]},
-  {id:'GELT',c:'gresults',x:1140,y:568,f:[{n:'group_set_id',t:'FK'}]},
+  {id:'GELT',c:'gresults',x:1140,y:568,f:[{n:'group_set_id',t:'FK'},{n:'grp_evt_set_id',t:'FK'}]},
   {id:'GPLT',c:'gresults',x:1330,y:568,f:[{n:'group_set_id',t:'FK'},{n:'grp_evt_set_id',t:'FK'}]}
 ];
 
@@ -101,6 +102,7 @@ const R=[
   ['GroupOutputSet','group_set_id','GroupSet','id'],
   ['GroupOutputSet','output_set_id','OutputSet','id'],
   ['GroupEventSet','group_id','ResultsGroup','id'],
+  ['GroupSettings','group_id','ResultsGroup','id'],
   ['GroupEventSet','evt_occ_set_id','EventOccurrenceSet','id'],
   ['GroupSummaryInfo','group_set_id','GroupSet','id'],
   ['GroupEventSetAnalysis','grp_evt_set_id','GroupEventSet','id'],
@@ -126,6 +128,8 @@ const R=[
   ['GEP','group_event_set_id','GroupEventSet','id'],
   ['GEP','GroupMethodId','GroupMethod','id'],
   ['GELT','group_set_id','GroupSet','id'],
+  ['GELT','grp_evt_set_id','GroupEventSet','id'],
+  ['GELT','GroupMethodId','GroupMethod','id'],
   ['GPLT','group_set_id','GroupSet','id'],
   ['GPLT','grp_evt_set_id','GroupEventSet','id'],
   ['GPLT','GroupMethodId','GroupMethod','id']
